@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Algorithm;
-using Algorithm.Parser;
+using Qfe;
+using Qfe.Parser;
 
 namespace AlgorithmTests
 {

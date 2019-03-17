@@ -1,0 +1,60 @@
+﻿<UserControl x:Class="Qfe.AlgorithmPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Qfe"
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
+             xmlns:xwpf="clr-namespace:Xceed.Wpf.Toolkit;assembly=Xceed.Wpf.Toolkit"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="300"
+             Background="Azure"
+             >
+    <StackPanel Orientation="Vertical">
+        <TextBlock xml:space="preserve">
+    Minimalizacja funkcji metodą:
+        - Gaussa-Siedlera
+        - z funkcją kary Powella dla ograniczeń
+        - z metodą kierunkową złotego podziału
+        </TextBlock>
+        <Label HorizontalAlignment="Center" >Parametry wejściowe:</Label>
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+            <StackPanel Orientation="Vertical"  Margin="0, 5, 0, 0">
+                <DockPanel>
+                    <Label DockPanel.Dock="Left"  Margin="0, 0, 5, 0">Punkt startowy:</Label>
+                    <StackPanel x:Name="initialPointsPanel" DockPanel.Dock="Bottom" Orientation="Vertical">
+                        <!--<local:InitialPointSingleInput PointNumber="0" PointValue="1.0"/>-->
+                    </StackPanel>
+                    <ComboBox x:Name="initialPointMethodBox" SelectionChanged="InitialPointMethodBox_SelectionChanged">
+                        <ComboBoxItem Tag="{DynamicResource initialPointMethod_Manual}">Podany ręcznie</ComboBoxItem>
+                        <!--<ComboBoxItem Tag="{DynamicResource initialPointMethod_Random}">Losowy</ComboBoxItem>-->
+                        <!--<ComboBoxItem Tag="{DynamicResource initialPointMethod_RandomMultistart}">Losowy - multistart</ComboBoxItem>-->
+                    </ComboBox>
+                </DockPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Label Width="120">Liczba iteracji:</Label>
+                    <xwpf:IntegerUpDown x:Name="maxIterationsBox" ShowButtonSpinner="False" Minimum="1" Maximum="100000" Width="60" Value="100"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Label Width="120">Min ||x(i+1) - x(i)||</Label>
+                    <xwpf:DoubleUpDown x:Name="minPositionChangeBox" ShowButtonSpinner="False" Width="60" Value="1E-3"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Label Width="120">Min |f(i+1) - f(i)|</Label>
+                    <xwpf:DoubleUpDown x:Name="minFunctionChangeBox" ShowButtonSpinner="False" Width="60" Value="1E-3"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Label Width="120">Tajemnicze kryterium</Label>
+                    <xwpf:DoubleUpDown x:Name="mysteriusCriteriaBox" ShowButtonSpinner="False" Width="60" Value="1E-3"/>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+        <Button x:Name="startButton" Click="StartAlgorithm_Click" Width="100" VerticalAlignment="Bottom" IsEnabled="False" Margin="0,10,0,10">Start</Button>
+    </StackPanel>
+    
+    <UserControl.Resources>
+        <local:InitialPointMethod x:Key="initialPointMethod_Manual">Manual</local:InitialPointMethod>
+        <local:InitialPointMethod x:Key="initialPointMethod_Random">Random</local:InitialPointMethod>
+        <local:InitialPointMethod x:Key="initialPointMethod_RandomMultistart">RandomMultistart</local:InitialPointMethod>
+    </UserControl.Resources>
+</UserControl>

@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Algorithm.Parser
+namespace Qfe.Parser
 {
     // Input:
     //
@@ -43,6 +43,7 @@ namespace Algorithm.Parser
         public double pow2(double x) => x * x;
         public double pow3(double x) => x * x * x;
         public double pow4(double x) => x * x * x * x;
+        public double pow5(double x) => x * x * x * x * x;
 
         public double exp(double x) => Math.Exp(x);
     }
@@ -58,33 +59,34 @@ namespace Algorithm.Parser
         public Task Parse(string input)
         {
             AllSections sections = SectionsParser.ParseSections(input);
-            return new Task()
-            {
-                Rank = (int)sections.RankSection.Rank,
-                Cost = compileCostFunction(sections),
-                Constraints = compileConstraints(sections)
-            };
+            return new Task
+            (
+                (int)sections.RankSection.Rank,
+                compileCostFunction(sections),
+                compileConstraints(sections)
+            );
+        }
+
+        public static void Initialize()
+        {
+            // Compile empty script to pre-load required assemblies
+            CSharpScript.Create<Func<double[], double>>("0", ScriptOptions.Default, typeof(SpecialFunctions)).Compile();
         }
 
         internal CostFunction compileCostFunction(AllSections sections)
         {
             var func = compileFunction(prepareFunctionCode(sections, sections.CostFunctionSection.Function));
-            return new CostFunction { Function = func.Item1, _compilation = func.Item2 };
+            return new CostFunction(func.Item1, func.Item2);
         }
 
         internal List<Constraint> compileConstraints(AllSections sections)
         {
-            if(sections.ConstraintsSection != null)
+            if (sections.ConstraintsSection != null)
             {
                 return sections.ConstraintsSection.Constraints.Select((s) =>
                 {
                     var func = compileFunction(prepareFunctionCode(sections, s.LhsOnlyVersion));
-                    return new Constraint()
-                    {
-                        Function = func.Item1,
-                        _compilation = func.Item2,
-                        Type = s.Type
-                    };
+                    return new Constraint(func.Item1, s.Type, func.Item2);
                 }).ToList();
             }
             else
@@ -98,7 +100,7 @@ namespace Algorithm.Parser
             string code = string.Format("(System.Func<double[], double>)( (x) => {0} )", funcCode);
             if (sections.ParametersSection != null)
             {
-                code = string.Format("{0}\n\n{1}", sections.ParametersSection.Content, code);
+                code = string.Format("{0}\n{1}", sections.ParametersSection.Content, code);
             }
 
             return code;

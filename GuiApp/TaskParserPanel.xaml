@@ -1,0 +1,82 @@
+﻿<UserControl x:Class="Qfe.TaskParserPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Qfe"
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
+             xmlns:xwpf="clr-namespace:Xceed.Wpf.Toolkit;assembly=Xceed.Wpf.Toolkit"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="500">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="60*"/>
+            <ColumnDefinition Width="5"/>
+            <ColumnDefinition Width="40*"/>
+        </Grid.ColumnDefinitions>
+        <TabControl x:Name="inputPanel" Grid.Column="0" TabStripPlacement="Bottom">
+            <TabItem Header="Uproszczony">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Orientation="Vertical">
+                        <StackPanel Orientation="Horizontal">
+                            <Label>Liczba zmiennych:</Label>
+                            <xwpf:IntegerUpDown x:Name="variableCountBox" Width="45" Value="1" Minimum="1" Maximum="10"/>
+                        </StackPanel>
+                        
+                        <Label HorizontalAlignment="Left">Parametry:</Label>
+                        <StackPanel x:Name="parametersPanel" Orientation="Vertical"/>
+                        <Button Click="AddParameter_Click" Width="20" Height="20" Margin="2" HorizontalAlignment="Left">+</Button>
+
+                        <Label>Funkcja celu:</Label>
+                        <TextBox x:Name="costFunctionTextBox" Width="250" Height="25" HorizontalAlignment="Left" VerticalContentAlignment="Center"/>
+
+                        <Label HorizontalAlignment="Left">Ograniczenia:</Label>
+                        <StackPanel x:Name="constraintsPanel" Orientation="Vertical"/>
+                        <Button Click="AddConstraint_Click" Width="20" Height="20" Margin="2" HorizontalAlignment="Left">+</Button>
+
+                        <Button Content="Akceptuj" Click="onWizardInputAcceptClicked" Width="120" HorizontalAlignment="Right"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Pełny">
+                <StackPanel Orientation="Vertical" HorizontalAlignment="Stretch">
+                    <Label>Wprowadź treść zadania</Label>
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Hidden">
+                        <TextBox x:Name="fullInput"
+                                 TextWrapping="Wrap" AcceptsReturn="True" AcceptsTab="True"
+                                 MaxLines="20"
+                                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                 Text="{DynamicResource ResourceKey=defaultTaskInput}"
+                         />
+                    </ScrollViewer>
+                    <Button Content="Akceptuj" Click="onFullInputAcceptClicked" Width="120" HorizontalAlignment="Right"/>
+                    <Button Content="Resetuj" Click="onFullInputResetClicked" Width="80" HorizontalAlignment="Right"/>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+
+        <GridSplitter Grid.Column="1" ResizeBehavior="PreviousAndNext" ResizeDirection="Auto" Background="Black" Width="5" Height="100"/>
+
+        <DockPanel x:Name="statusPanel" Grid.Column="2" LastChildFill="True">
+            <Label DockPanel.Dock="Top" HorizontalAlignment="Center">Status wejścia</Label>
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                <TextBlock x:Name="statusTextBlock" Background="AliceBlue"/>
+            </ScrollViewer>
+        </DockPanel>
+    </Grid>
+
+    <UserControl.Resources>
+        <system:String x:Key="defaultTaskInput" xml:space="preserve">
+$variables: 1;
+
+$parameters:
+  var a = 1.0;
+
+$function:
+  x[0] + a;
+
+$constraints:
+  x[0] &lt;= 0;
+        </system:String>
+    </UserControl.Resources>
+</UserControl>

@@ -1,0 +1,32 @@
+﻿<UserControl x:Class="Qfe.ConstraintInput"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Qfe"
+             xmlns:algorithm="clr-namespace:Qfe;assembly=Algorithm"
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
+             xmlns:xwpf="clr-namespace:Xceed.Wpf.Toolkit;assembly=Xceed.Wpf.Toolkit"
+             mc:Ignorable="d" 
+             d:DesignHeight="25" d:DesignWidth="300">
+    <StackPanel Orientation="Horizontal">
+        <xwpf:WatermarkTextBox x:Name="lhsBox" Width="200" Height="25" VerticalContentAlignment="Center" Watermark="Funkcja"/>
+        <ComboBox x:Name="constraintTypeBox" Width="30" SelectedIndex="0" >
+            <ComboBox.Resources>
+                <!-- hack to hide arrow -->
+                <system:Double x:Key="{x:Static SystemParameters.VerticalScrollBarWidthKey}">0</system:Double>
+            </ComboBox.Resources>
+            <ComboBoxItem Tag="{DynamicResource constraintType_LessEqual}">&lt;=</ComboBoxItem>
+            <ComboBoxItem Tag="{DynamicResource constraintType_Equality}">==</ComboBoxItem>
+            <ComboBoxItem Tag="{DynamicResource constraintType_GreaterEqual}">&gt;=</ComboBoxItem>
+        </ComboBox>
+        <xwpf:WatermarkTextBox x:Name="rhsBox" Width="40" Height="25" VerticalContentAlignment="Center" Watermark="Funkcja"/>
+        <Button Click="Deleter_Click" Width="20" Height="20" Margin="2">X</Button>
+    </StackPanel>
+
+    <UserControl.Resources>
+        <algorithm:ConstraintType x:Key="constraintType_Equality">Equality</algorithm:ConstraintType>
+        <algorithm:ConstraintType x:Key="constraintType_LessEqual">LessEqual</algorithm:ConstraintType>
+        <algorithm:ConstraintType x:Key="constraintType_GreaterEqual">GreaterEqual</algorithm:ConstraintType>
+    </UserControl.Resources>
+</UserControl>

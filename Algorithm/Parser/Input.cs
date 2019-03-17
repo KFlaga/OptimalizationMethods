@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Algorithm.Parser
+namespace Qfe.Parser
 {
     public class Input
     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using Algorithm;
-using Algorithm.Parser;
+using Qfe;
+using Qfe.Parser;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AlgorithmTests

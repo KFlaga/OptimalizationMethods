@@ -1,0 +1,22 @@
+﻿<UserControl x:Class="Qfe.ParameterInput"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Qfe"
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
+             xmlns:xwpf="clr-namespace:Xceed.Wpf.Toolkit;assembly=Xceed.Wpf.Toolkit"
+             mc:Ignorable="d" 
+             d:DesignHeight="25" d:DesignWidth="300">
+    <StackPanel Orientation="Horizontal">
+        <xwpf:WatermarkTextBox x:Name="nameBox" Watermark="Nazwa" Width="45" Height="25" VerticalContentAlignment="Center" HorizontalContentAlignment="Left"/>
+        <Label>[</Label>
+        <xwpf:IntegerUpDown x:Name="lengthBox" Width="40" Value="1" Minimum="1" Maximum="9"/>
+        <Label>]</Label>
+        <Label>=</Label>
+        <StackPanel x:Name="valuesPanel" Orientation="Horizontal">
+            <!--xwpf:DoubleUpDown Width="40" Height="25" Value="0.0" ShowButtonSpinner="False"/>-->
+        </StackPanel>
+        <Button Click="Deleter_Click" Width="20" Height="20" Margin="2">X</Button>
+    </StackPanel>
+</UserControl>

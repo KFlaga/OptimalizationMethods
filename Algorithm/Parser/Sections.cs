@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Algorithm.Parser
+namespace Qfe.Parser
 {
     internal enum SectionType
     {
