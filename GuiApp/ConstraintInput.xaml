@@ -17,7 +17,7 @@
                 <system:Double x:Key="{x:Static SystemParameters.VerticalScrollBarWidthKey}">0</system:Double>
             </ComboBox.Resources>
             <ComboBoxItem Tag="{DynamicResource constraintType_LessEqual}">&lt;=</ComboBoxItem>
-            <ComboBoxItem Tag="{DynamicResource constraintType_Equality}">==</ComboBoxItem>
+            <!--<ComboBoxItem Tag="{DynamicResource constraintType_Equality}">==</ComboBoxItem>-->
             <ComboBoxItem Tag="{DynamicResource constraintType_GreaterEqual}">&gt;=</ComboBoxItem>
         </ComboBox>
         <xwpf:WatermarkTextBox x:Name="rhsBox" Width="40" Height="25" VerticalContentAlignment="Center" Watermark="Funkcja"/>

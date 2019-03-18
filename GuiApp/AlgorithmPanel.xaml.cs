@@ -1,27 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace Qfe
 {
-    public enum InitialPointMethod
-    {
-        Manual,
-        Random,
-        RandomMultistart
-    }
-
     public partial class AlgorithmPanel : UserControl
     {
         Qfe.Task task;
@@ -41,7 +23,7 @@ namespace Qfe
         
         public InitialPointMethod InitializationMethod { get; set; } = InitialPointMethod.Manual;
         public int MaxIterations { get { return maxIterationsBox.Value.Value; } }
-        public double MinPointChange { get { return minPositionChangeBox.Value.Value; } }
+        public double MinPositionChange { get { return minPositionChangeBox.Value.Value; } }
         public double MinFunctionChange { get { return minFunctionChangeBox.Value.Value; } }
         public double MysteriousCriteria { get { return mysteriusCriteriaBox.Value.Value; } }
 
@@ -86,7 +68,17 @@ namespace Qfe
 
         private void StartAlgorithm_Click(object sender, RoutedEventArgs e)
         {
-            TaskWindow taskWindow = new TaskWindow(task)
+            TaskWindow taskWindow = new TaskWindow(
+                new GaussSiedlerWithPowellPenalty()
+                {
+                    Task = task,
+                    InitializationMethod = InitializationMethod,
+                    InitialValues = InitialValues,
+                    MinPositionChange = MinPositionChange,
+                    MinFunctionChange = MinFunctionChange,
+                    MysteriusCriteria = MysteriousCriteria,
+                    MaxIterations = MaxIterations
+                })
             {
                 ShowActivated = true
             };

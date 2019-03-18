@@ -63,7 +63,8 @@ namespace Qfe.Parser
             (
                 (int)sections.RankSection.Rank,
                 compileCostFunction(sections),
-                compileConstraints(sections)
+                compileConstraints(sections),
+                input
             );
         }
 

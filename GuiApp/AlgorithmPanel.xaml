@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Qfe"
+             xmlns:algorithm="clr-namespace:Qfe;assembly=Algorithm"
              xmlns:system="clr-namespace:System;assembly=mscorlib"
              xmlns:xwpf="clr-namespace:Xceed.Wpf.Toolkit;assembly=Xceed.Wpf.Toolkit"
              mc:Ignorable="d" 
@@ -53,8 +54,8 @@
     </StackPanel>
     
     <UserControl.Resources>
-        <local:InitialPointMethod x:Key="initialPointMethod_Manual">Manual</local:InitialPointMethod>
-        <local:InitialPointMethod x:Key="initialPointMethod_Random">Random</local:InitialPointMethod>
-        <local:InitialPointMethod x:Key="initialPointMethod_RandomMultistart">RandomMultistart</local:InitialPointMethod>
+        <algorithm:InitialPointMethod x:Key="initialPointMethod_Manual">Manual</algorithm:InitialPointMethod>
+        <algorithm:InitialPointMethod x:Key="initialPointMethod_Random">Random</algorithm:InitialPointMethod>
+        <algorithm:InitialPointMethod x:Key="initialPointMethod_RandomMultistart">RandomMultistart</algorithm:InitialPointMethod>
     </UserControl.Resources>
 </UserControl>

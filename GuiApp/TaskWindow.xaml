@@ -6,7 +6,17 @@
         xmlns:local="clr-namespace:Qfe"
         mc:Ignorable="d"
         Title="TaskWindow" Height="450" Width="800">
-    <Grid>
-        
-    </Grid>
+    <DockPanel>
+        <StackPanel Orientation="Vertical">
+            <StackPanel Orientation="Horizontal">
+                <Label>Czas wykonania:</Label>
+                <Label x:Name="exeutionTimeLabel"/>
+            </StackPanel>
+            <Label HorizontalAlignment="Center">Wyniki</Label>
+            <TextBlock x:Name="algorithmResults" Width="300" Margin="5"/>
+        </StackPanel>
+        <StackPanel>
+            <Label HorizontalAlignment="Center">TODO: wykres</Label>
+        </StackPanel>
+    </DockPanel>
 </Window>

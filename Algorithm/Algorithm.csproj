@@ -148,6 +148,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DirectionalMinimalization.cs" />
+    <Compile Include="GaussSiedlerWithPowellPenalty.cs" />
+    <Compile Include="MinimalizationAlgorithm.cs" />
     <Compile Include="Parser\Input.cs" />
     <Compile Include="Parser\TaskParser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

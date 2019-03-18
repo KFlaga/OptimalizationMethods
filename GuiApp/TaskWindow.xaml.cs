@@ -1,28 +1,81 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics;
+using System.Threading;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace Qfe
 {
     public partial class TaskWindow : Window
     {
-        public Qfe.Task ARiddleToSolve { get; private set; }
+        public MinimalizationAlgorithm Algorithm { get; private set; }
 
-        public TaskWindow(Qfe.Task task)
+        private string Status
         {
-            ARiddleToSolve = task;
+            set
+            {
+                algorithmResults.Text = value;
+            }
+        }
+        
+        private DispatcherTimer updateTimer;
+        private Stopwatch executionTime = new Stopwatch();
+
+        public TaskWindow(MinimalizationAlgorithm algorithm)
+        {
+            Algorithm = algorithm;
 
             InitializeComponent();
+
+            updateTimer = new DispatcherTimer(DispatcherPriority.Background, Dispatcher);
+            updateTimer.Interval = TimeSpan.FromMilliseconds(1000.0);
+            updateTimer.Tick += UpdateTimer_Tick;
+
+            Loaded += TaskWindow_Loaded;
+            Closing += TaskWindow_Closing;
+        }
+
+        private void TaskWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            Status = "Trwa wykonywanie algorytmu";
+            startTask();
+        }
+
+        private void TaskWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            updateTimer.Stop();
+            Algorithm.Terminate();
+        }
+
+        private void startTask()
+        {
+            updateTimer.Start();
+            executionTime.Start();
+            System.Threading.Tasks.Task.Run((Action)(() =>
+            {
+                try
+                {
+                    Algorithm.Solve();
+                }
+                catch(Exception ex)
+                {
+                    // TODO
+                }
+
+                Dispatcher.Invoke((Action)(() =>
+                {
+                    Status = "Ukończono";
+                }));
+
+                executionTime.Stop();
+                updateTimer.Stop();
+            }));
+        }
+
+        private void UpdateTimer_Tick(object sender, EventArgs e)
+        {
+            // TODO
+            exeutionTimeLabel.Content = (executionTime.ElapsedMilliseconds * 0.001).ToString() + " s";
         }
     }
 }
