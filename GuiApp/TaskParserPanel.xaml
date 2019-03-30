@@ -67,15 +67,16 @@
 
     <UserControl.Resources>
         <system:String x:Key="defaultTaskInput" xml:space="preserve">
-$variables: 1;
+$variables: 2;
 
 $parameters:
   var a = 1.0;
 
 $function:
-  x[0] + a;
+  x[0] * x[0] + x[1] * x[1] + a;
 
 $constraints:
+  x[0] &lt;= 0;
   x[0] &lt;= 0;
         </system:String>
     </UserControl.Resources>

@@ -1,11 +1,11 @@
-﻿using MathNet.Numerics.LinearAlgebra.Double;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using MathNet.Numerics.LinearAlgebra.Double;
 
 namespace Qfe
 {
-    public class GaussSiedlerWithPowellPenalty : IterativeMinimalization
+    public class GaussSiedler : IterativeMinimalization
     {
         protected override IterationResults SolveIteration(Vector point, int iteration)
         {
@@ -17,7 +17,7 @@ namespace Qfe
             };
 
             double fvalue = 0.0;
-            for (int direction = 0; direction < Task.Rank; ++direction)
+            for(int direction = 0; direction < Task.Rank; ++direction)
             {
                 directionalMinimizer.Direction = direction;
                 var result = directionalMinimizer.FindMinimum(point);

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Controls;
+using MathNet.Numerics.LinearAlgebra.Double;
 
 namespace Qfe
 {
@@ -69,11 +70,11 @@ namespace Qfe
         private void StartAlgorithm_Click(object sender, RoutedEventArgs e)
         {
             TaskWindow taskWindow = new TaskWindow(
-                new GaussSiedlerWithPowellPenalty()
+                new GaussSiedler()
                 {
                     Task = task,
                     InitializationMethod = InitializationMethod,
-                    InitialValues = InitialValues,
+                    InitialPoint = new DenseVector(InitialValues),
                     MinPositionChange = MinPositionChange,
                     MinFunctionChange = MinFunctionChange,
                     MysteriusCriteria = MysteriousCriteria,

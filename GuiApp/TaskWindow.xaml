@@ -3,7 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:xwpf="clr-namespace:Xceed.Wpf.Toolkit;assembly=Xceed.Wpf.Toolkit"
         xmlns:local="clr-namespace:Qfe"
+        xmlns:oxy="http://oxyplot.org/wpf"
         mc:Ignorable="d"
         Title="TaskWindow" Height="450" Width="800">
     <DockPanel>
@@ -13,10 +15,17 @@
                 <Label x:Name="exeutionTimeLabel"/>
             </StackPanel>
             <Label HorizontalAlignment="Center">Wyniki</Label>
-            <TextBlock x:Name="algorithmResults" Width="300" Margin="5"/>
+            <TextBlock x:Name="algorithmResults" Width="300" Margin="5" Background="AliceBlue"/>
         </StackPanel>
-        <StackPanel>
-            <Label HorizontalAlignment="Center">TODO: wykres</Label>
-        </StackPanel>
+        <DockPanel>
+            <TabControl DockPanel.Dock="Top" TabStripPlacement="Bottom" SelectedIndex="0">
+                <TabItem Header="Historia zmian">
+                    <local:IterationHistoryPlot x:Name="iterationsPlot"/>
+                </TabItem>
+                <TabItem x:Name="mapPlotPanel" Header="Wykres 2d" IsEnabled="False">
+                    <local:FunctionMapPlot x:Name="functionMapPlot"/>
+                </TabItem>
+            </TabControl>
+        </DockPanel>
     </DockPanel>
 </Window>

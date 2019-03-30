@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using MathNet.Numerics.LinearAlgebra.Double;
 
 namespace Qfe
 {
@@ -12,10 +13,10 @@ namespace Qfe
 
     public struct CostFunction
     {
-        public readonly Func<double[], double> Function;
+        public readonly Func<Vector, double> Function;
         private readonly object _compilation;
 
-        public CostFunction(Func<double[], double> f, object compilation)
+        public CostFunction(Func<Vector, double> f, object compilation)
         {
             Function = f;
             _compilation = compilation;
@@ -24,15 +25,35 @@ namespace Qfe
 
     public struct Constraint
     {
-        public readonly Func<double[], double> Function;
+        public readonly Func<Vector, double> Function;
         public readonly ConstraintType Type;
         private readonly object _compilation;
 
-        public Constraint(Func<double[], double> f, ConstraintType ctype, object compilation)
+        public Constraint(Func<Vector, double> f, ConstraintType ctype, object compilation)
         {
             Function = f;
             Type = ctype;
             _compilation = compilation;
+        }
+
+        public double Evaluate(Vector x)
+        {
+            // If constraint is met returns 0, else c
+            double c = Function(x);
+            if (Type == ConstraintType.LessEqual)
+            {
+                return Math.Max(c, 0.0);
+            }
+            else if (Type == ConstraintType.GreaterEqual)
+            {
+                return Math.Min(c, 0.0);
+            }
+            return c;
+        }
+
+        public bool IsMet(Vector x)
+        {
+            return Evaluate(x) == 0.0;
         }
     }
 

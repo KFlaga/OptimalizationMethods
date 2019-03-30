@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using MathNet.Numerics.LinearAlgebra.Double;
 
 namespace Qfe
 {
@@ -15,10 +15,10 @@ namespace Qfe
 
     public class IterationResults
     {
-        public int Iteratrion { get; set; }
+        public int Iteration { get; set; }
 
         public double CurrentCost { get; set; }
-        public double[] CurrentPoint { get; set; }
+        public Vector CurrentPoint { get; set; }
         
         public double CurrentFunction { get; set; }
         public double LastPointChange { get; set; }
@@ -26,32 +26,76 @@ namespace Qfe
         public bool CostraintsMet { get; set; }
     }
 
-    public abstract class MinimalizationAlgorithm
+    public abstract class IterativeMinimalization
     {
         public Qfe.Task Task { get; set; }
 
-        public InitialPointMethod InitializationMethod { get; set; }
-        public double[] InitialValues { get; set; }
+        public InitialPointMethod InitializationMethod { get; set; } = InitialPointMethod.Manual;
+        public Vector InitialPoint { get; set; }
 
         public int MaxIterations { get; set; }
         public double MinPositionChange { get; set; }
         public double MinFunctionChange { get; set; }
         public double MysteriusCriteria { get; set; }
-        
-        protected double cost(double[] x)
+
+        protected List<IterationResults> iterations = new List<IterationResults>();
+
+        public bool Terminated { get; set; }
+        public ReadOnlyCollection<IterationResults> Results => new ReadOnlyCollection<IterationResults>(iterations);
+
+        public virtual IterationResults Solve()
+        {
+            Init();
+            int iteration = 1;
+            Vector point = InitialPoint;
+
+            do
+            {
+                point = SolveIteration(point, iteration).CurrentPoint;
+                ++iteration;
+            }
+            while (!ShouldEnd());
+            return iterations.Last();
+        }
+
+        protected abstract IterationResults SolveIteration(Vector point, int iteration);
+
+        protected virtual void Init()
+        {
+            double fvalue = cost(InitialPoint);
+            iterations = new List<IterationResults>(MaxIterations + 1)
+            {
+                new IterationResults()
+                {
+                    Iteration = 0,
+                    CurrentPoint = InitialPoint,
+                    CurrentFunction = fvalue,
+                    CurrentCost = fvalue,
+                    CostraintsMet = true,
+                    LastFunuctionChange = Math.Abs(fvalue),
+                    LastPointChange = InitialPoint.L2Norm(),
+
+                }
+            };
+        }
+
+        protected virtual bool ShouldEnd()
+        {
+            var lastIteration = iterations.Last();
+            return Terminated ||
+                   lastIteration.Iteration > MaxIterations ||
+                   (lastIteration.LastPointChange < MinPositionChange &&
+                    lastIteration.LastFunuctionChange < MinFunctionChange);
+        }
+
+        protected double cost(Vector x)
         {
             return Task.Cost.Function(x);
         }
 
-        protected double constraint(int index, double[] x)
+        protected double constraint(int index, Vector x)
         {
-            // ensure constraints are c(x) >= 0
-            double c = Task.Constraints[index].Function(x);
-            return Task.Constraints[index].Type == ConstraintType.LessEqual ? -c : c;
+            return Task.Constraints[index].Evaluate(x);
         }
-
-        public abstract void Solve();
-        public abstract void Terminate();
-        public abstract List<IterationResults> GetResults();
     }
 }

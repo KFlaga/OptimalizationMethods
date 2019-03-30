@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.Scripting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MathNet.Numerics.LinearAlgebra.Double;
 
 namespace Qfe.Parser
 {
@@ -46,6 +47,7 @@ namespace Qfe.Parser
         public double pow5(double x) => x * x * x * x * x;
 
         public double exp(double x) => Math.Exp(x);
+        public double abs(double x) => Math.Abs(x);
     }
 
     public class FunctionCompilationFailure : Exception
@@ -68,15 +70,29 @@ namespace Qfe.Parser
             );
         }
 
+        private static ScriptOptions options = null;
+        private static ScriptOptions getOptions()
+        {
+            if(options == null)
+            {
+                var mathNetNumerics = System.Reflection.Assembly.GetAssembly(typeof(Vector));
+                options = ScriptOptions.Default
+                    .AddReferences(mathNetNumerics)
+                    .AddImports("MathNet.Numerics.LinearAlgebra.Double");
+            }
+            return options;
+        }
+
         public static void Initialize()
         {
             // Compile empty script to pre-load required assemblies
-            CSharpScript.Create<Func<double[], double>>("0", ScriptOptions.Default, typeof(SpecialFunctions)).Compile();
+            CSharpScript.Create<Func<Vector, double>>("0", getOptions(), typeof(SpecialFunctions)).Compile();
         }
 
         internal CostFunction compileCostFunction(AllSections sections)
         {
             var func = compileFunction(prepareFunctionCode(sections, sections.CostFunctionSection.Function));
+            testFunction(func.Item1, sections.RankSection.Rank);
             return new CostFunction(func.Item1, func.Item2);
         }
 
@@ -87,6 +103,7 @@ namespace Qfe.Parser
                 return sections.ConstraintsSection.Constraints.Select((s) =>
                 {
                     var func = compileFunction(prepareFunctionCode(sections, s.LhsOnlyVersion));
+                    testFunction(func.Item1, sections.RankSection.Rank);
                     return new Constraint(func.Item1, s.Type, func.Item2);
                 }).ToList();
             }
@@ -98,7 +115,7 @@ namespace Qfe.Parser
 
         private string prepareFunctionCode(AllSections sections, string funcCode)
         {
-            string code = string.Format("(System.Func<double[], double>)( (x) => {0} )", funcCode);
+            string code = string.Format("(System.Func<Vector, double>)( (x) => {0} )", funcCode);
             if (sections.ParametersSection != null)
             {
                 code = string.Format("{0}\n{1}", sections.ParametersSection.Content, code);
@@ -107,9 +124,9 @@ namespace Qfe.Parser
             return code;
         }
 
-        private Tuple<Func<double[], double>, object> compileFunction(string code)
+        private Tuple<Func<Vector, double>, object> compileFunction(string code)
         {
-            var script = CSharpScript.Create<Func<double[], double>>(code, ScriptOptions.Default, typeof(SpecialFunctions));
+            var script = CSharpScript.Create<Func<Vector, double>>(code, getOptions(), typeof(SpecialFunctions));
             var diags = script.Compile();
 
             if (diags.Any((diag) => diag.Severity == DiagnosticSeverity.Error))
@@ -124,7 +141,26 @@ namespace Qfe.Parser
             var task = script.RunAsync(new SpecialFunctions());
             task.Wait();
 
-            return new Tuple<Func<double[], double>, object>(task.Result.ReturnValue, script);
+            return new Tuple<Func<Vector, double>, object>(task.Result.ReturnValue, script);
+        }
+
+        private void testFunction(Func<Vector, double> func, uint rank)
+        {
+            // Try to execute each compiled function to check for some errors - it should work with all-zeros input
+            try
+            {
+                func((DenseVector)DenseVector.Build.Dense((int)rank, 0.0));
+            }
+            catch (DivideByZeroException) { } // Those two may be thrown becouse zeros are invalid input after all
+            catch (OverflowException) { }
+            catch(IndexOutOfRangeException ex) // Those are called almost surely becouse parameter is a table
+            {
+                throw new IndexOutOfRangeException("Odwołanie do parametru o indeksie większym niż zadeklarowano", ex);
+            }
+            catch (ArgumentOutOfRangeException ex) // Those are called almost surely becouse rank is too small
+            {
+                throw new IndexOutOfRangeException("Odwołanie do zmiennej o indeksie większym niż zadeklarowano (x[i] -> max i == " + rank.ToString() + ")", ex);
+            }
         }
     }
 }

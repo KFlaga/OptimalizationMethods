@@ -1,0 +1,40 @@
+﻿<UserControl x:Class="Qfe.IterationHistoryPlot"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Qfe"
+             xmlns:oxy="http://oxyplot.org/wpf"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Background="AntiqueWhite">
+            <ToggleButton x:Name="buttonFunctionPlot"
+                          Checked="addFunctionToGraph" 
+                          Unchecked="removeFunctionFromGraph" Margin="2" 
+                          IsChecked="True">
+                f(x)
+            </ToggleButton>
+            <ToggleButton x:Name="buttonCostPlot" 
+                          Checked="addCostToGraph" 
+                          Unchecked="removeCostFromGraph" Margin="2" 
+                          IsChecked="False">
+                cost(x)
+            </ToggleButton>
+            <ToggleButton x:Name="buttonFunctionChangePlot" 
+                          Checked="addFunctionChangeToGraph" 
+                          Unchecked="removeFunctionChangeFromGraph" Margin="2" 
+                          IsChecked="False">
+                |fk+1 - fk|
+            </ToggleButton>
+            <ToggleButton x:Name="buttonPointChangePlot"
+                          Checked="addPointChangeToGraph" 
+                          Unchecked="removePointChangeFromGraph" Margin="2" 
+                          IsChecked="False">
+                ||xk+1 - x||
+            </ToggleButton>
+        </StackPanel>
+        <oxy:PlotView x:Name="iterationsPlot">
+        </oxy:PlotView>
+    </DockPanel>
+</UserControl>

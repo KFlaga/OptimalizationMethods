@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlgorithmTests", "Algorithm
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GuiApp", "GuiApp\GuiApp.csproj", "{51225BA7-1A1D-4F97-A6BC-D7C31E64552B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmarks", "Benchmarks\Benchmarks.csproj", "{F8621E4C-009E-4DA8-95EF-44BB3E62FF10}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{51225BA7-1A1D-4F97-A6BC-D7C31E64552B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{51225BA7-1A1D-4F97-A6BC-D7C31E64552B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{51225BA7-1A1D-4F97-A6BC-D7C31E64552B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F8621E4C-009E-4DA8-95EF-44BB3E62FF10}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F8621E4C-009E-4DA8-95EF-44BB3E62FF10}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F8621E4C-009E-4DA8-95EF-44BB3E62FF10}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F8621E4C-009E-4DA8-95EF-44BB3E62FF10}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

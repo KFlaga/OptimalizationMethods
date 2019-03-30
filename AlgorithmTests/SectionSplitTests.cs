@@ -111,8 +111,7 @@ namespace AlgorithmTests
             Assert.AreEqual(2u, section.Rank);
 
             section.Content = "0  ; ";
-            section.Parse();
-            Assert.AreEqual(0u, section.Rank);
+            TestUtils.ExpectThrow(() => section.Parse());
 
             section.Content = "1";
             TestUtils.ExpectThrow(() => section.Parse());

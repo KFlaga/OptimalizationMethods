@@ -28,13 +28,13 @@ namespace Qfe.Parser
             // Must constain single unsigned integer and semicolon
             if(!Content.Contains(';'))
             {
-                throw new ArgumentException("Rank section must end with semicolon");
+                throw new ArgumentException("Sekcja '$variables' musi kończyć się średnikiem");
             }
             Input input = new Input(Content);
             string possiblyInt = input.ReadWhile((c) => c != ';');
-            if(!uint.TryParse(possiblyInt, out Rank))
+            if(!uint.TryParse(possiblyInt, out Rank) || Rank == 0)
             {
-                throw new ArgumentException("Rank section must contain single unsigned integer");
+                throw new ArgumentException("Sekcja '$variables' musi zaiwerać wyłącznie jedną dodatnią liczbę");
             }
         }
     }
@@ -56,7 +56,7 @@ namespace Qfe.Parser
             // Must contain non-empty content and end with semicolon
             if (!Content.Contains(';'))
             {
-                throw new ArgumentException("CostFunction section must end with semicolon");
+                throw new ArgumentException("Sekcja '$function' musi konczyc się średnikiem");
             }
             Input input = new Input(Content);
             Function = input.ReadWhile((c) => c != ';');
@@ -112,7 +112,7 @@ namespace Qfe.Parser
                 var leftRightSide = constraintContent.Split(separators, 3, StringSplitOptions.None);
                 if(leftRightSide.Length != 2)
                 {
-                    throw new ArgumentException("Constraint must have one comparision operator");
+                    throw new ArgumentException("Każde ograniczenie musi mieć dokładnie jeden operator porównania");
                 }
 
                 string op = constraintContent.Substring(leftRightSide[0].Length, 2);
@@ -171,7 +171,7 @@ namespace Qfe.Parser
             }
             catch(InvalidOperationException)
             {
-                throw new ArgumentException("Missing one of mandatory sections: '$variables' or '$fuction'");
+                throw new ArgumentException("Nie znaleziono wymaganych sekcji: '$variables', '$fuction'");
             }
         }
 
@@ -191,7 +191,7 @@ namespace Qfe.Parser
                 }
                 catch (InvalidOperationException)
                 {
-                    throw new ArgumentException("Input contains unsupported sections");
+                    throw new ArgumentException("Wejście zawiera niewspierane sekcje");
                 }
             }
             return sections;
@@ -203,7 +203,7 @@ namespace Qfe.Parser
             {
                 if(sections.Count((x) => x.GetType() == s.GetType()) > 1)
                 {
-                    throw new ArgumentException("Input contains non-unique sections");
+                    throw new ArgumentException("Wejście zawiera zduplikowane sekcje");
                 }
             }
         }
