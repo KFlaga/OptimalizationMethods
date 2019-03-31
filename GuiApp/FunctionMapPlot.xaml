@@ -33,6 +33,11 @@
                           IsChecked="False">
                 Ograniczenia
             </ToggleButton>
+            <Button x:Name="buttonRedraw"
+                          Click="ButtonRedraw_Click" 
+                           Margin="2">
+                Przerysuj
+            </Button>
         </StackPanel>
         <oxy:PlotView x:Name="plot">
         </oxy:PlotView>

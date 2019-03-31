@@ -7,41 +7,36 @@ namespace Qfe
 {
     public class GaussSiedlerWithPowellPenalty : IterativeMinimalization
     {
-        protected override IterationResults SolveIteration(Vector point, int iteration)
+        public PowellPenaltyFunction PowellPenalty { get; set; }
+        
+        protected double cost(Vector x)
         {
-            DirectionalMinimalization directionalMinimizer = new NewtonMethod()
-            {
-                Function = Task.Cost.Function,
-                MaxError = MinFunctionChange,
-                MinPointChange = MinPositionChange
-            };
+            return Task.Cost.Function(x) + penalty(x);
+        }
 
-            double fvalue = 0.0;
-            for (int direction = 0; direction < Task.Rank; ++direction)
-            {
-                directionalMinimizer.Direction = direction;
-                var result = directionalMinimizer.FindMinimum(point);
+        protected double penalty(Vector x)
+        {
+            return PowellPenalty.Evaluate(x);
+        }
 
-                point = result.Point;
-                fvalue = result.Value;
-
-                iterations.Add(new IterationResults()
-                {
-                    Iteration = iteration,
-                    CurrentPoint = point,
-                    CurrentFunction = fvalue,
-                    CurrentCost = fvalue,
-                    CostraintsMet = true,
-                    LastFunuctionChange = Math.Abs(fvalue - iterations.Last().CurrentFunction),
-                    LastPointChange = (point - iterations.Last().CurrentPoint).L2Norm(),
-                });
-            }
-            return iterations.Last();
+        protected bool constraitsMet(Vector x)
+        {
+            return Task.Constraints.All((c) => c.IsMet(x));
         }
 
         protected override void Init()
         {
-            double fvalue = cost(InitialPoint);
+            if (PowellPenalty == null)
+            {
+                PowellPenalty = new ZeroThetaPenalty(Task.Constraints, ZeroThetaPenalty.SigmaChangeMethod.Multiplicative, 2.0, 2.0);
+            }
+            else
+            {
+                PowellPenalty.Reset();
+            }
+
+            double fvalue = Task.Cost.Function(InitialPoint);
+            double fcost = fvalue + penalty(InitialPoint);
             iterations = new List<IterationResults>(MaxIterations * Task.Rank + 1)
             {
                 new IterationResults()
@@ -49,13 +44,46 @@ namespace Qfe
                     Iteration = 0,
                     CurrentPoint = InitialPoint,
                     CurrentFunction = fvalue,
-                    CurrentCost = fvalue,
-                    CostraintsMet = true,
-                    LastFunuctionChange = Math.Abs(fvalue),
+                    CurrentCost = fcost,
+                    CostraintsMet = constraitsMet(InitialPoint),
+                    LastFunuctionChange = Math.Abs(fcost),
                     LastPointChange = InitialPoint.L2Norm(),
 
                 }
             };
+        }
+
+        protected override IterationResults SolveIteration(Vector point, int iteration)
+        {
+            DirectionalMinimalization directionalMinimizer = new NewtonMethod()
+            {
+                Function = cost,
+                MaxError = MinFunctionChange,
+                MinPointChange = MinPositionChange
+            };
+            
+            double lastValue = iterations.Last().CurrentCost;
+            Vector lastPoint = iterations.Last().CurrentPoint;
+            for (int direction = 0; direction < Task.Rank; ++direction)
+            {
+                directionalMinimizer.Direction = direction;
+                var result = directionalMinimizer.FindMinimum(point);
+
+                point = result.Point;
+
+                iterations.Add(new IterationResults()
+                {
+                    Iteration = iteration,
+                    CurrentPoint = point,
+                    CurrentFunction = Task.Cost.Function(point),
+                    CurrentCost = result.Value,
+                    CostraintsMet = constraitsMet(point),
+                    LastFunuctionChange = Math.Abs(result.Value - lastValue),
+                    LastPointChange = (point - lastPoint).L2Norm(),
+                });
+            }
+            PowellPenalty.NextIteration();
+            return iterations.Last();
         }
     }
 }

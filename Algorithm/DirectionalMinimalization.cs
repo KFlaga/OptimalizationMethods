@@ -14,6 +14,7 @@ namespace Qfe
         public Func<Vector, double> Function { get; set; }
         public int Direction { get; set; }
         public double MaxError { get; set; } = 1e-3;
+        public int MaxIterations { get; set; } = 20;
 
         public abstract FunctionPoint FindMinimum(Vector startPoint); 
     }

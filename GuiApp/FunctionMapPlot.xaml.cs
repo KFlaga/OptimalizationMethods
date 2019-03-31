@@ -33,7 +33,7 @@ namespace Qfe
                 results = value;
                 if (results != null)
                 {
-                    update(results);
+                    updateBoundsAndPlots(results);
                 }
             }
         }
@@ -128,7 +128,7 @@ namespace Qfe
             return span;
         }
 
-        private void update(IEnumerable<IterationResults> iterations)
+        private void updateBoundsAndPlots(IEnumerable<IterationResults> iterations)
         {
             try
             {
@@ -162,27 +162,32 @@ namespace Qfe
                 axisY.Minimum = y_min;
                 axisY.Maximum = y_max;
 
-                if (buttonLevelSets.IsChecked.Value)
-                {
-                    updateLevelSets(iterations);
-                }
-                if(buttonColorMap.IsChecked.Value)
-                {
-                    updateHeatMap(iterations);
-                }
-                if (buttonTrackPoints.IsChecked.Value)
-                {
-                    updatePoints(iterations);
-                }
-                if (buttonDrawConstraints.IsChecked.Value)
-                {
-                    updateConstraints(iterations);
-                }
+                updatePlots(iterations);
             }
             catch (Exception)
             {
                 functionValues = null;
                 MessageBox.Show("Wystąpił wyjątek podczas wyliczania wartości funkcji - nie będzie działać wykres warstwic.");
+            }
+        }
+
+        private void updatePlots(IEnumerable<IterationResults> iterations)
+        {
+            if (buttonLevelSets.IsChecked.Value)
+            {
+                updateLevelSets(iterations);
+            }
+            if (buttonColorMap.IsChecked.Value)
+            {
+                updateHeatMap(iterations);
+            }
+            if (buttonTrackPoints.IsChecked.Value)
+            {
+                updatePoints(iterations);
+            }
+            if (buttonDrawConstraints.IsChecked.Value)
+            {
+                updateConstraints(iterations);
             }
         }
 
@@ -203,6 +208,12 @@ namespace Qfe
             return index;
         }
 
+        private void addSeries(Series series)
+        {
+            if(!model.Series.Contains(series))
+                model.Series.Insert(indexOfSeries(series), series);
+        }
+
         private void updateLevelSets(IEnumerable<IterationResults> iterations)
         {
             if (functionValues != null)
@@ -211,7 +222,8 @@ namespace Qfe
                 levelSets.RowCoordinates = linspace(y_min, y_max, dataResolution);
 
                 levelSets.Data = functionValues;
-                model.Series.Insert(indexOfSeries(levelSets), levelSets);
+                levelSets.CalculateContours();
+                addSeries(levelSets);
                 plot.InvalidatePlot(true);
             }
         }
@@ -226,7 +238,7 @@ namespace Qfe
                 heatMap.Y1 = y_max;
 
                 heatMap.Data = functionValues;
-                model.Series.Insert(indexOfSeries(heatMap), heatMap);
+                addSeries(heatMap);
                 plot.InvalidatePlot(true);
             }
         }
@@ -258,7 +270,7 @@ namespace Qfe
                     prev.MoveNext();
                 }
                 
-                model.Series.Insert(indexOfSeries(points), points);
+                addSeries(points);
                 plot.InvalidatePlot(true);
             }
         }
@@ -292,7 +304,7 @@ namespace Qfe
                         }
                     }
                 }
-                model.Series.Insert(indexOfSeries(constraints), constraints);
+                addSeries(constraints);
                 plot.InvalidatePlot(true);
             }
         }
@@ -340,6 +352,30 @@ namespace Qfe
         {
             model.Series.Remove(constraints);
             plot.InvalidatePlot(true);
+        }
+
+        private void ButtonRedraw_Click(object sender, RoutedEventArgs e)
+        {
+            // Redraws map for current axis bounds
+
+            x_min = axisX.ActualMinimum;
+            x_max = axisX.ActualMaximum;
+            y_min = axisY.ActualMinimum;
+            y_max = axisY.ActualMaximum;
+
+            functionValues = new double[dataResolution, dataResolution];
+            double[] xs = linspace(x_min, x_max, dataResolution);
+            double[] ys = linspace(y_min, y_max, dataResolution);
+            for (int x = 0; x < dataResolution; ++x)
+            {
+                for (int y = 0; y < dataResolution; ++y)
+                {
+                    var point = new DenseVector(new double[2] { xs[x], ys[y] });
+                    functionValues[x, y] = Task.Cost.Function(point);
+                }
+            }
+
+            updatePlots(Results);
         }
     }
 }

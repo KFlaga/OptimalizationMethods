@@ -15,10 +15,12 @@ namespace Qfe
             
             Vector point = (Vector)startPoint.Clone();
             double lastPosition, lastValue;
+            int iteration = 0;
             do
             {
                 lastPosition = point[Direction];
                 lastValue = Function(point);
+                iteration++;
 
                 double df = NumericalDerivative.First(Function, point, Direction);
                 double df2 = NumericalDerivative.Second(Function, point, Direction);
@@ -49,8 +51,9 @@ namespace Qfe
                     point[Direction] += Math.Abs(df / df2);
                 }
             }
-            while (Math.Abs(lastValue - Function(point)) > MaxError ||
-                   Math.Abs(lastPosition - point[Direction]) > MinPointChange);
+            while (iteration < MaxIterations &&
+                   (Math.Abs(lastValue - Function(point)) > MaxError ||
+                    Math.Abs(lastPosition - point[Direction]) > MinPointChange));
 
             return new FunctionPoint()
             {

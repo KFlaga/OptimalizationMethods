@@ -76,8 +76,8 @@ $function:
   x[0] * x[0] + x[1] * x[1] + a;
 
 $constraints:
-  x[0] &lt;= 0;
-  x[0] &lt;= 0;
+  x[0] &lt;= -2;
+  x[1] &gt;= 3;
         </system:String>
     </UserControl.Resources>
 </UserControl>

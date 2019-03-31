@@ -38,22 +38,19 @@ namespace Qfe
 
         public double Evaluate(Vector x)
         {
-            // If constraint is met returns 0, else c
+            // Returns c for type c >= 0 || c == 0 and -c for type c <= 0
             double c = Function(x);
             if (Type == ConstraintType.LessEqual)
             {
-                return Math.Max(c, 0.0);
-            }
-            else if (Type == ConstraintType.GreaterEqual)
-            {
-                return Math.Min(c, 0.0);
+                return -c;
             }
             return c;
         }
 
-        public bool IsMet(Vector x)
+        public bool IsMet(Vector x, double maxError = 1e-3)
         {
-            return Evaluate(x) == 0.0;
+            double c = Evaluate(x);
+            return Type == ConstraintType.Equality ? Math.Abs(c - maxError) < maxError : c > -maxError;
         }
     }
 

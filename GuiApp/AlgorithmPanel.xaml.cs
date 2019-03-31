@@ -70,14 +70,12 @@ namespace Qfe
         private void StartAlgorithm_Click(object sender, RoutedEventArgs e)
         {
             TaskWindow taskWindow = new TaskWindow(
-                new GaussSiedler()
+                new GaussSiedlerWithPowellPenalty()
                 {
                     Task = task,
-                    InitializationMethod = InitializationMethod,
                     InitialPoint = new DenseVector(InitialValues),
                     MinPositionChange = MinPositionChange,
                     MinFunctionChange = MinFunctionChange,
-                    MysteriusCriteria = MysteriousCriteria,
                     MaxIterations = MaxIterations
                 })
             {

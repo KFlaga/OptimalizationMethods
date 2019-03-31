@@ -16,24 +16,24 @@ namespace Qfe
                 MinPointChange = MinPositionChange
             };
 
-            double fvalue = 0.0;
+            double lastValue = iterations.Last().CurrentFunction;
+            Vector lastPoint = iterations.Last().CurrentPoint;
             for(int direction = 0; direction < Task.Rank; ++direction)
             {
                 directionalMinimizer.Direction = direction;
                 var result = directionalMinimizer.FindMinimum(point);
 
                 point = result.Point;
-                fvalue = result.Value;
 
                 iterations.Add(new IterationResults()
                 {
                     Iteration = iteration,
                     CurrentPoint = point,
-                    CurrentFunction = fvalue,
-                    CurrentCost = fvalue,
+                    CurrentFunction = result.Value,
+                    CurrentCost = result.Value,
                     CostraintsMet = true,
-                    LastFunuctionChange = Math.Abs(fvalue - iterations.Last().CurrentFunction),
-                    LastPointChange = (point - iterations.Last().CurrentPoint).L2Norm(),
+                    LastFunuctionChange = Math.Abs(result.Value - lastValue),
+                    LastPointChange = (point - lastPoint).L2Norm(),
                 });
             }
             return iterations.Last();
@@ -41,7 +41,7 @@ namespace Qfe
 
         protected override void Init()
         {
-            double fvalue = cost(InitialPoint);
+            double fvalue = Task.Cost.Function(InitialPoint);
             iterations = new List<IterationResults>(MaxIterations * Task.Rank + 1)
             {
                 new IterationResults()
@@ -53,7 +53,6 @@ namespace Qfe
                     CostraintsMet = true,
                     LastFunuctionChange = Math.Abs(fvalue),
                     LastPointChange = InitialPoint.L2Norm(),
-
                 }
             };
         }

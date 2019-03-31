@@ -165,6 +165,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DirectionalMinimalizationTests.cs" />
+    <Compile Include="PowellTests.cs" />
     <Compile Include="GaussSiedlerTests.cs" />
     <Compile Include="ParserTests.cs" />
     <Compile Include="SectionSplitTests.cs" />
