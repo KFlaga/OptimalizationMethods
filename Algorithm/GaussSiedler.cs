@@ -31,9 +31,9 @@ namespace Qfe
                     CurrentPoint = point,
                     CurrentFunction = result.Value,
                     CurrentCost = result.Value,
-                    CostraintsMet = true,
                     LastFunuctionChange = Math.Abs(result.Value - lastValue),
                     LastPointChange = (point - lastPoint).L2Norm(),
+                    MaxConstraintValue = 0.0
                 });
             }
             return iterations.Last();
@@ -50,9 +50,9 @@ namespace Qfe
                     CurrentPoint = InitialPoint,
                     CurrentFunction = fvalue,
                     CurrentCost = fvalue,
-                    CostraintsMet = true,
                     LastFunuctionChange = Math.Abs(fvalue),
                     LastPointChange = InitialPoint.L2Norm(),
+                    MaxConstraintValue = 0.0
                 }
             };
         }

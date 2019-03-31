@@ -26,7 +26,7 @@ namespace Qfe
         public int MaxIterations { get { return maxIterationsBox.Value.Value; } }
         public double MinPositionChange { get { return minPositionChangeBox.Value.Value; } }
         public double MinFunctionChange { get { return minFunctionChangeBox.Value.Value; } }
-        public double MysteriousCriteria { get { return mysteriusCriteriaBox.Value.Value; } }
+        public double MaxConstraintValue { get { return maxConstraintValueBox.Value.Value; } }
 
         public double[] InitialValues
         {
@@ -76,7 +76,9 @@ namespace Qfe
                     InitialPoint = new DenseVector(InitialValues),
                     MinPositionChange = MinPositionChange,
                     MinFunctionChange = MinFunctionChange,
-                    MaxIterations = MaxIterations
+                    MaxIterations = MaxIterations,
+                    MaxConstraintError = MaxConstraintValue,
+                    PowellPenalty = new ProperThetaPenalty(task.Constraints)
                 })
             {
                 ShowActivated = true

@@ -7,7 +7,7 @@
         xmlns:local="clr-namespace:Qfe"
         xmlns:oxy="http://oxyplot.org/wpf"
         mc:Ignorable="d"
-        Title="TaskWindow" Height="450" Width="800">
+        Title="TaskWindow" Height="600" Width="800">
     <DockPanel>
         <StackPanel Orientation="Vertical">
             <StackPanel Orientation="Horizontal">
@@ -16,6 +16,12 @@
             </StackPanel>
             <Label HorizontalAlignment="Center">Wyniki</Label>
             <TextBlock x:Name="algorithmResults" Width="300" Margin="5" Background="AliceBlue"/>
+            <StackPanel Orientation="Horizontal">
+                <Label>Iteracja</Label>
+                <xwpf:IntegerUpDown x:Name="pickIteration" ShowButtonSpinner="True" Width="100" Minimum="0" IsEnabled="False" ValueChanged="PickIteration_ValueChanged"/>
+                <Label>z</Label>
+                <Label x:Name="iterationsCountLabel"/>
+            </StackPanel>
         </StackPanel>
         <DockPanel>
             <TabControl DockPanel.Dock="Top" TabStripPlacement="Bottom" SelectedIndex="0">

@@ -23,7 +23,7 @@ namespace Qfe
         public double CurrentFunction { get; set; } // TODO: This is a bit confusing -> consider removing it or renaming fields
         public double LastPointChange { get; set; }
         public double LastFunuctionChange { get; set; }
-        public bool CostraintsMet { get; set; }
+        public double MaxConstraintValue { get; set; }
     }
 
     public abstract class IterativeMinimalization
@@ -38,7 +38,7 @@ namespace Qfe
 
         protected List<IterationResults> iterations = new List<IterationResults>();
 
-        public bool Terminated { get; set; }
+        public virtual bool Terminated { get; set; }
         public ReadOnlyCollection<IterationResults> Results => new ReadOnlyCollection<IterationResults>(iterations);
 
         public virtual IterationResults Solve()

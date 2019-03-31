@@ -1,6 +1,7 @@
 ﻿using MathNet.Numerics.LinearAlgebra.Double;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Qfe
 {
@@ -39,7 +40,17 @@ namespace Qfe
             return 0.5 * c_sum;
         }
 
-        public abstract void NextIteration();
+        public double MaxConstraint(Vector x)
+        {
+            double m = 0.0;
+            for (int i = 0; i < N; ++i)
+            {
+                m = Math.Max(m, Math.Abs(Math.Min(Constraints[i].Evaluate(x), Theta[i])));
+            }
+            return m;
+        }
+
+        public abstract void NextIteration(Vector x);
         public abstract void Reset();
 
         protected PowellPenaltyFunction(List<Constraint> constraints, DenseVector initialTheta, DenseVector initialSigma)
@@ -52,42 +63,67 @@ namespace Qfe
 
     public class ZeroThetaPenalty : PowellPenaltyFunction
     {
-        public enum SigmaChangeMethod
-        {
-            Constant,
-            Additive,
-            Multiplicative
-        }
-
-        public SigmaChangeMethod ChangeMethod { get; set; }
-        public double SigmaIncrement { get; set; }
+        public double SigmaMultiplier { get; set; }
 
         private double initialSigma;
 
         public ZeroThetaPenalty(
             List<Constraint> constraints,
-            SigmaChangeMethod changeMethod = SigmaChangeMethod.Multiplicative,
             double initialValue = 1.0,
             double increment = 10.0) :
             base(constraints)
         {
-            ChangeMethod = changeMethod;
             initialSigma = initialValue;
-            SigmaIncrement = increment;
+            SigmaMultiplier = increment;
             Reset();
         }
 
-        public override void NextIteration()
+        public override void NextIteration(Vector x)
         {
             if (N > 0)
             {
-                if (ChangeMethod == SigmaChangeMethod.Additive)
+                Sigma = (Vector)Sigma.Multiply(SigmaMultiplier);
+            }
+        }
+
+        public override void Reset()
+        {
+            if (N > 0)
+            {
+                Sigma = (Vector)new DenseVector(N).Add(initialSigma);
+            }
+        }
+    }
+
+    // dOi = -min(ci, 0.0)
+    // To be accurate requires dS >> S (e.g. multiplier = 10)
+    // O(0) = 0
+    public class SimpleThetaPenalty : PowellPenaltyFunction
+    {
+        public double SigmaMultiplier { get; set; }
+
+        private double initialSigma;
+
+        public SimpleThetaPenalty(
+            List<Constraint> constraints,
+            double initialValue = 1.0,
+            double increment = 10.0) :
+            base(constraints)
+        {
+            initialSigma = initialValue;
+            SigmaMultiplier = increment;
+            Reset();
+        }
+
+        public override void NextIteration(Vector x)
+        {
+            if (N > 0)
+            {
+                Sigma = (Vector)Sigma.Multiply(SigmaMultiplier);
+                for(int i = 0; i < N; ++i)
                 {
-                    Sigma = (Vector)Sigma.Add(SigmaIncrement);
-                }
-                else if (ChangeMethod == SigmaChangeMethod.Multiplicative)
-                {
-                    Sigma = (Vector)Sigma.Multiply(SigmaIncrement);
+                    Theta[i] -= Math.Min(Constraints[i].Evaluate(x), Theta[i]);
+                    Theta[i] /= SigmaMultiplier;
                 }
             }
         }
@@ -97,6 +133,71 @@ namespace Qfe
             if (N > 0)
             {
                 Sigma = (Vector)new DenseVector(N).Add(initialSigma);
+                Theta = (Vector)new DenseVector(N);
+            }
+        }
+    }
+
+    // As suggested by Powell with Fletcher modification
+    public class ProperThetaPenalty : PowellPenaltyFunction
+    {
+        public const double SigmaMultiplier = 10.0;
+
+        private double initialSigma;
+        private double previousMaxConstraint = 0.0;
+
+        public ProperThetaPenalty(
+            List<Constraint> constraints,
+            double initialSigma = 1.0) :
+            base(constraints)
+        {
+            this.initialSigma = initialSigma;
+            Reset();
+        }
+
+        public override void NextIteration(Vector x)
+        {
+            if (N > 0)
+            {
+                double maxConstraint = MaxConstraint(x);
+                if (maxConstraint >= previousMaxConstraint)
+                {
+                    IncrementSigma(x);
+                }
+                else
+                {
+                    for (int i = 0; i < N; ++i)
+                    {
+                        Theta[i] -= Math.Min(Constraints[i].Evaluate(x), Theta[i]);
+                    }
+                    if (maxConstraint > 0.25 * previousMaxConstraint)
+                    {
+                        IncrementSigma(x);
+                    }
+                    previousMaxConstraint = maxConstraint;
+                }
+            }
+        }
+
+        private void IncrementSigma(Vector x)
+        {
+            for (int i = 0; i < N; ++i)
+            {
+                if (Math.Abs(Math.Min(Constraints[i].Evaluate(x), Theta[i])) >= 0.25 * previousMaxConstraint)
+                {
+                    Sigma[i] = Sigma[i] * SigmaMultiplier;
+                    Theta[i] = Theta[i] / SigmaMultiplier;
+                }
+            }
+        }
+
+        public override void Reset()
+        {
+            if (N > 0)
+            {
+                Sigma = (Vector)new DenseVector(N).Add(initialSigma);
+                Theta = (Vector)new DenseVector(N);
+                previousMaxConstraint = 0.0;
             }
         }
     }

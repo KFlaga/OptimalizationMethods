@@ -15,8 +15,8 @@
         <TextBlock xml:space="preserve">
     Minimalizacja funkcji metodą:
         - Gaussa-Siedlera
-        - z funkcją kary Powella dla ograniczeń
-        - z metodą kierunkową złotego podziału
+        - z funkcją kary Powella dla ograniczeń c(x) >= 0
+        - z metodą kierunkową Newtona
         </TextBlock>
         <Label HorizontalAlignment="Center" >Parametry wejściowe:</Label>
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
@@ -45,8 +45,8 @@
                     <xwpf:DoubleUpDown x:Name="minFunctionChangeBox" ShowButtonSpinner="False" Width="60" Value="1E-3"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal">
-                    <Label Width="120">Tajemnicze kryterium</Label>
-                    <xwpf:DoubleUpDown x:Name="mysteriusCriteriaBox" ShowButtonSpinner="False" Width="60" Value="1E-3"/>
+                    <Label Width="120">Max ||c(x)||</Label>
+                    <xwpf:DoubleUpDown x:Name="maxConstraintValueBox" ShowButtonSpinner="False" Width="60" Value="1E-3"/>
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>

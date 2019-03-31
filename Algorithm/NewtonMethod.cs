@@ -33,7 +33,7 @@ namespace Qfe
                         return new FunctionPoint()
                         {
                             Point = point,
-                            Value = Function(point)
+                            Value = lastValue
                         };
                     }
                     else
@@ -42,6 +42,7 @@ namespace Qfe
                         df = 1.0;
                     }
                 }
+                // TODO: handle case df2 ~ 0.0
                 if(df > 0.0) // Move in direction which minimizes f(x)
                 {
                     point[Direction] -= Math.Abs(df / df2);

@@ -69,11 +69,14 @@ namespace Qfe
                 try
                 {
                     Algorithm.Solve();
-
-                    string msg = buildResultsMessage(lastResults, "Ukończono");
+                    
                     Dispatcher.Invoke((Action)(() =>
                     {
-                        Status = msg;
+                        pickIteration.IsEnabled = true;
+                        pickIteration.Maximum = lastResults.Count - 1;
+                        pickIteration.Value = lastResults.Count - 1;
+                        iterationsCountLabel.Content = (lastResults.Count - 1).ToString();
+
                         iterationsPlot.Results = lastResults;
                         if(mapPlotPanel.IsEnabled)
                         {
@@ -97,33 +100,29 @@ namespace Qfe
         private void UpdateTimer_Tick(object sender, EventArgs e)
         {
             exeutionTimeLabel.Content = (executionTime.ElapsedMilliseconds * 0.001).ToString() + " s";
-            Status = buildResultsMessage(Algorithm.Results, "W trakcie liczenia");
+            Status = buildResultsMessage(Algorithm.Results.Last(), "W trakcie liczenia");
 
             iterationsPlot.Results = lastResults;
         }
 
-        private string buildResultsMessage(IList<IterationResults> results, string status)
+        private string buildResultsMessage(IterationResults result, string status)
         {
-            var lastResult = results[results.Count - 1];
-
             StringBuilder s = new StringBuilder();
             s.AppendFormat("Status: {0}", status);
             s.AppendLine();
             s.AppendLine();
-
-            s.AppendFormat("Iteracja: {0} / {1}", lastResult.Iteration, Algorithm.MaxIterations);
+            
+            s.AppendFormat("x = {0}", printPoint(result.CurrentPoint));
             s.AppendLine();
-            s.AppendFormat("x = {0}", printPoint(lastResult.CurrentPoint));
+            s.AppendFormat("f(x) = {0}", result.CurrentFunction);
             s.AppendLine();
-            s.AppendFormat("f(x) = {0}", lastResult.CurrentFunction);
+            s.AppendFormat("f(x) + penalty(x) = {0}", result.CurrentCost);
             s.AppendLine();
-            s.AppendFormat("f(x) + penalty(x) = {0}", lastResult.CurrentCost);
+            s.AppendFormat("max|c(x)| : {0}", result.MaxConstraintValue);
             s.AppendLine();
-            s.AppendFormat("Ograniczenia spełnione: {0}", lastResult.CostraintsMet);
+            s.AppendFormat("|fk+1 - fk| = {0}", result.LastFunuctionChange);
             s.AppendLine();
-            s.AppendFormat("|fk+1 - fk| = {0}", lastResult.LastFunuctionChange);
-            s.AppendLine();
-            s.AppendFormat("||xk+1 - xk|| = {0}", lastResult.LastPointChange);
+            s.AppendFormat("||xk+1 - xk|| = {0}", result.LastPointChange);
             s.AppendLine();
             
             return s.ToString();
@@ -136,6 +135,11 @@ namespace Qfe
             s.Append(string.Join(", ", x.Select((v) => v.ToString("F3"))));
             s.Append(" }");
             return s.ToString();
+        }
+
+        private void PickIteration_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            Status = buildResultsMessage(lastResults[pickIteration.Value.Value], "Ukończono");
         }
     }
 }

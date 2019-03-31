@@ -8,6 +8,11 @@ namespace Qfe
     public class GaussSiedlerWithPowellPenalty : IterativeMinimalization
     {
         public PowellPenaltyFunction PowellPenalty { get; set; }
+        public double MaxConstraintError { get; set; } = 1e-3;
+
+        public override bool Terminated { get => base.Terminated; set { base.Terminated = value; gaussSiedler.Terminated = value; } }
+
+        private GaussSiedler gaussSiedler = new GaussSiedler();
         
         protected double cost(Vector x)
         {
@@ -28,16 +33,21 @@ namespace Qfe
         {
             if (PowellPenalty == null)
             {
-                PowellPenalty = new ZeroThetaPenalty(Task.Constraints, ZeroThetaPenalty.SigmaChangeMethod.Multiplicative, 2.0, 2.0);
+                PowellPenalty = new ZeroThetaPenalty(Task.Constraints, 2.0, 2.0);
             }
             else
             {
                 PowellPenalty.Reset();
             }
 
+            gaussSiedler.MaxIterations = MaxIterations;
+            gaussSiedler.MinFunctionChange = MinFunctionChange;
+            gaussSiedler.MinPositionChange = MinPositionChange;
+            gaussSiedler.Task = new Task(Task.Rank, new CostFunction(cost, null), null, "");
+
             double fvalue = Task.Cost.Function(InitialPoint);
             double fcost = fvalue + penalty(InitialPoint);
-            iterations = new List<IterationResults>(MaxIterations * Task.Rank + 1)
+            iterations = new List<IterationResults>(MaxIterations * Task.Rank * 4 + 1)
             {
                 new IterationResults()
                 {
@@ -45,45 +55,45 @@ namespace Qfe
                     CurrentPoint = InitialPoint,
                     CurrentFunction = fvalue,
                     CurrentCost = fcost,
-                    CostraintsMet = constraitsMet(InitialPoint),
                     LastFunuctionChange = Math.Abs(fcost),
                     LastPointChange = InitialPoint.L2Norm(),
-
+                    MaxConstraintValue = PowellPenalty.MaxConstraint(InitialPoint)
                 }
             };
         }
 
         protected override IterationResults SolveIteration(Vector point, int iteration)
         {
-            DirectionalMinimalization directionalMinimizer = new NewtonMethod()
-            {
-                Function = cost,
-                MaxError = MinFunctionChange,
-                MinPointChange = MinPositionChange
-            };
-            
-            double lastValue = iterations.Last().CurrentCost;
-            Vector lastPoint = iterations.Last().CurrentPoint;
-            for (int direction = 0; direction < Task.Rank; ++direction)
-            {
-                directionalMinimizer.Direction = direction;
-                var result = directionalMinimizer.FindMinimum(point);
+            gaussSiedler.InitialPoint = point;
+            gaussSiedler.Solve();
 
-                point = result.Point;
-
+            foreach(var result in gaussSiedler.Results.Skip(1))
+            {
                 iterations.Add(new IterationResults()
                 {
                     Iteration = iteration,
-                    CurrentPoint = point,
-                    CurrentFunction = Task.Cost.Function(point),
-                    CurrentCost = result.Value,
-                    CostraintsMet = constraitsMet(point),
-                    LastFunuctionChange = Math.Abs(result.Value - lastValue),
-                    LastPointChange = (point - lastPoint).L2Norm(),
+                    CurrentPoint = result.CurrentPoint,
+                    LastFunuctionChange = result.LastFunuctionChange,
+                    LastPointChange = result.LastPointChange,
+                    
+                    CurrentCost = cost(result.CurrentPoint),
+                    CurrentFunction = Task.Cost.Function(result.CurrentPoint),
+                    MaxConstraintValue = PowellPenalty.Evaluate(result.CurrentPoint)
                 });
             }
-            PowellPenalty.NextIteration();
+
+            PowellPenalty.NextIteration(iterations.Last().CurrentPoint);
             return iterations.Last();
+        }
+
+        protected override bool ShouldEnd()
+        {
+            var lastIteration = iterations.Last();
+            return Terminated ||
+                   lastIteration.Iteration > MaxIterations ||
+                   (lastIteration.MaxConstraintValue < MaxConstraintError &&
+                    lastIteration.LastPointChange < MinPositionChange &&
+                    lastIteration.LastFunuctionChange < MinFunctionChange);
         }
     }
 }

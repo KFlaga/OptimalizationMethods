@@ -10,258 +10,419 @@ namespace AlgorithmTests
     [TestClass]
     public class PowellTests
     {
-        double error = 1e-3;
-        List<Func<Vector, double>> unconstrained = new List<Func<Vector, double>>();
+        const double error = 1e-3;
 
-        List<Func<Vector, double>> withConstraints(params Func<Vector, double>[] funcs)
+        public struct TestPoint
         {
-            return new List<Func<Vector, double>>(funcs);
+            public double[] Initial { get; private set; }
+            public double[] ExpectedResult { get; private set; }
+            public Func<Vector, bool> CustomMatcher { get; private set; }
+
+            public TestPoint(double[] i, double[] expectedPoint)
+            {
+                Initial = i;
+                ExpectedResult = expectedPoint;
+                CustomMatcher = null;
+            }
+
+            public TestPoint(double[] i, Func<Vector, bool> match)
+            {
+                Initial = i;
+                ExpectedResult = null;
+                CustomMatcher = match;
+            }
+
+            public void Check(Vector x)
+            {
+                if(CustomMatcher != null)
+                {
+                    Assert.IsTrue(CustomMatcher(x));
+                }
+                else
+                {
+                    for (int i = 0; i < ExpectedResult.Length; ++i)
+                    {
+                        Assert.AreEqual(ExpectedResult[i], x[i], error);
+                    }
+                }
+            }
         }
 
-        GaussSiedlerWithPowellPenalty getAlgorithm(Func<Vector, double> func, int rank, List<Func<Vector, double>> constraints)
+        public class TestCase
         {
-            return new GaussSiedlerWithPowellPenalty()
+            public Func<Vector, double> Function;
+            public int Rank;
+            public List<Constraint> Constraints;
+            public List<TestPoint> Points;
+        }
+
+        void Execute(TestCase test, PowellPenaltyFunction penaltyFunction)
+        {
+            GaussSiedlerWithPowellPenalty sut = new GaussSiedlerWithPowellPenalty()
             {
                 MaxIterations = 100,
                 MinFunctionChange = error,
                 MinPositionChange = error,
+                PowellPenalty = penaltyFunction,
                 Task = new Task
                 (
-                    rank: rank,
-                    costFunction: new CostFunction(func, null),
-                    constraints: constraints.Select((c) => new Constraint(c, ConstraintType.GreaterEqual, null)).ToList(),
+                    rank: test.Rank,
+                    costFunction: new CostFunction(test.Function, null),
+                    constraints: test.Constraints,
                     input: ""
                 )
             };
-        }
 
-        [TestMethod]
-        public void square_unconstrained()
-        {
-            GaussSiedlerWithPowellPenalty sut = getAlgorithm((x) => x[0] * x[0], 1, unconstrained);
-
-            List<double[]> initialPoints = new List<double[]>()
+            foreach(var p in test.Points)
             {
-                new double[] { 0.0 },
-                new double[] { 1.0 },
-                new double[] { 100.0 },
-                new double[] { -100.0 }
-            };
-
-            foreach (var x0 in initialPoints)
-            {
-                sut.InitialPoint = new DenseVector(x0);
+                sut.InitialPoint = new DenseVector(p.Initial);
                 var result = sut.Solve();
-
-                Assert.AreEqual(0.0, result.CurrentCost, error);
-                Assert.AreEqual(0.0, result.CurrentPoint[0], error);
+                p.Check(result.CurrentPoint);
             }
         }
-
-        [TestMethod]
-        public void square_simpleConstraint()
+        
+        static List<Constraint> makeConstraints(params Func<Vector, double>[] funcs)
         {
-            GaussSiedlerWithPowellPenalty sut = getAlgorithm((x) => x[0] * x[0], 1,
-                withConstraints((x) => x[0] - 2.0) // x >= 2
-            );
+            return new List<Func<Vector, double>>(funcs).Select((c) => new Constraint(c, ConstraintType.GreaterEqual, null)).ToList();
+        }
 
-            List<double[]> initialPoints = new List<double[]>()
+        static TestCase data_square_unconstrained()
+        {
+            return new TestCase
             {
-                new double[] { 0.0 },
-                new double[] { 1.0 },
-                new double[] { 100.0 },
-                new double[] { -100.0 }
+                Function = (x) => x[0] * x[0],
+                Rank = 1,
+                Constraints = new List<Constraint>(),
+                Points = new List<TestPoint>()
+                {
+                    new TestPoint(new double[] { 0.0 }, new double[] { 0.0 }),
+                    new TestPoint(new double[] { 1.0 }, new double[] { 0.0 }),
+                    new TestPoint(new double[] { 100.0 }, new double[] { 0.0 }),
+                    new TestPoint(new double[] { -100.0 }, new double[] { 0.0 }),
+                }
             };
-
-            foreach (var x0 in initialPoints)
-            {
-                sut.InitialPoint = new DenseVector(x0);
-                var result = sut.Solve();
-
-                Assert.AreEqual(4.0, result.CurrentCost, error);
-                Assert.AreEqual(2.0, result.CurrentPoint[0], error);
-            }
         }
 
         [TestMethod]
-        public void square_multipleConstraints()
+        public void ZeroTheta_square_unconstrained()
         {
-            GaussSiedlerWithPowellPenalty sut = getAlgorithm((x) => x[0] * x[0], 1,
-                withConstraints((x) => x[0] + 2.0, // x >= -2
-                                (x) => -x[0] - 1.0,  // x <= -1
-                                (x) => x[0] * x[0] - 2.0)  // x^2 >= 2
-            );
-
-            List<double[]> initialPoints = new List<double[]>()
-            {
-                new double[] { 0.0 },
-                new double[] { -2.0 },
-                new double[] { -Math.Sqrt(2.0) },
-                new double[] { 100.0 },
-                new double[] { -100.0 }
-            };
-
-            foreach (var x0 in initialPoints)
-            {
-                sut.InitialPoint = new DenseVector(x0);
-                var result = sut.Solve();
-
-                Assert.AreEqual(2.0, result.CurrentCost, error);
-                Assert.AreEqual(-Math.Sqrt(2.0), result.CurrentPoint[0], error);
-            }
+            var data = data_square_unconstrained();
+            Execute(data, new ZeroThetaPenalty(data.Constraints, 2.0, 2.0));
         }
 
         [TestMethod]
-        public void multipleInputs_singleMinimum_oneConstraint()
+        [Ignore]
+        public void SimpleTheta_square_unconstrained()
+        {
+            var data = data_square_unconstrained();
+            Execute(data, new SimpleThetaPenalty(data.Constraints, 1.0, 4.0));
+        }
+
+        [TestMethod]
+        public void ProperTheta_square_unconstrained()
+        {
+            var data = data_square_unconstrained();
+            Execute(data, new ProperThetaPenalty(data.Constraints));
+        }
+
+        static TestCase data_square_simpleConstraint()
+        {
+            return new TestCase
+            {
+                Function = (x) => x[0] * x[0],
+                Rank = 1,
+                Constraints = makeConstraints((x) => x[0] - 2.0),
+                Points = new List<TestPoint>()
+                {
+                    new TestPoint(new double[] { 0.0 }, new double[] { 2.0 }),
+                    new TestPoint(new double[] { 1.0 }, new double[] { 2.0 }),
+                    new TestPoint(new double[] { 100.0 }, new double[] { 2.0 }),
+                    new TestPoint(new double[] { -100.0 }, new double[] { 2.0 }),
+                }
+            };
+        }
+
+        [TestMethod]
+        public void ZeroTheta_square_simpleConstraint()
+        {
+            var data = data_square_simpleConstraint();
+            Execute(data, new ZeroThetaPenalty(data.Constraints, 2.0, 2.0));
+        }
+
+        [TestMethod]
+        [Ignore]
+        public void SimpleTheta_square_simpleConstraint()
+        {
+            var data = data_square_simpleConstraint();
+            Execute(data, new SimpleThetaPenalty(data.Constraints, 1.0, 4.0));
+        }
+
+        [TestMethod]
+        public void ProperTheta_square_simpleConstraint()
+        {
+            var data = data_square_simpleConstraint();
+            Execute(data, new ProperThetaPenalty(data.Constraints));
+        }
+
+        static TestCase data_square_multipleConstraints()
+        {
+            return new TestCase
+            {
+                Function = (x) => x[0] * x[0],
+                Rank = 1,
+                Constraints = makeConstraints((x) => x[0] + 2.0, // x >= -2
+                                              (x) => -x[0] - 1.0,  // x <= -1
+                                              (x) => x[0] * x[0] - 2.0),  // x^2 >= 2,
+                Points = new List<TestPoint>()
+                {
+                    new TestPoint(new double[] { 0.0 }, new double[] { -Math.Sqrt(2.0) }),
+                    new TestPoint(new double[] { -2.0 }, new double[] { -Math.Sqrt(2.0) }),
+                    new TestPoint(new double[] { -Math.Sqrt(2.0) }, new double[] { -Math.Sqrt(2.0) }),
+                    new TestPoint(new double[] { 100.0 }, new double[] { -Math.Sqrt(2.0) }),
+                    new TestPoint(new double[] { -100.0 }, new double[] { -Math.Sqrt(2.0) }),
+                }
+            };
+        }
+
+        [TestMethod]
+        public void ZeroTheta_square_multipleConstraints()
+        {
+            var data = data_square_multipleConstraints();
+            Execute(data, new ZeroThetaPenalty(data.Constraints, 2.0, 2.0));
+        }
+
+        [TestMethod]
+        [Ignore]
+        public void SimpleTheta_square_multipleConstraints() // It doesn't work well yet
+        {
+            var data = data_square_multipleConstraints();
+            Execute(data, new SimpleThetaPenalty(data.Constraints, 1.0, 10.0));
+        }
+
+        [TestMethod]
+        public void ProperTheta_square_multipleConstraints()
+        {
+            var data = data_square_multipleConstraints();
+            Execute(data, new ProperThetaPenalty(data.Constraints));
+        }
+
+        static TestCase data_multipleInputs_singleMinimum_oneConstraint()
         {
             // f(x,y) = (x - 1) ^ 2 + (y + 2) ^ 2 + 4
-            GaussSiedlerWithPowellPenalty sut = getAlgorithm((x) => (x[0] - 1.0) * (x[0] - 1.0) + (x[1] + 2.0) * (x[1] + 2.0) + 4.0, 2,
-                withConstraints((x) => x[1] + 1.0) // y >= -1
-            );
-
-            List<double[]> initialPoints = new List<double[]>()
+            return new TestCase
             {
-                new double[] { 1.0, 2.0 },
-                new double[] { 0.0, 0.0 },
-                new double[] { 1.0, 4.0 },
-                new double[] { -5.0, -2.0 },
-                new double[] { -100.0, 100.0 },
+                Function = (x) => (x[0] - 1.0) * (x[0] - 1.0) + (x[1] + 2.0) * (x[1] + 2.0) + 4.0,
+                Rank = 2,
+                Constraints = makeConstraints((x) => x[1] + 1.0), // y >= -1
+                Points = new List<TestPoint>()
+                {
+                    new TestPoint(new double[] { 1.0, 2.0 }, new double[] { 1.0, -1.0 }),
+                    new TestPoint(new double[] { 0.0, 0.0 }, new double[] { 1.0, -1.0 }),
+                    new TestPoint(new double[] { 1.0, 4.0 }, new double[] { 1.0, -1.0 }),
+                    new TestPoint(new double[] { -5.0, -2.0 }, new double[] { 1.0, -1.0 }),
+                    new TestPoint(new double[] { -5.0, -5.0 }, new double[] { 1.0, -1.0 }),
+                    new TestPoint(new double[] { -100.0, 100.0 }, new double[] { 1.0, -1.0 }),
+                }
             };
-
-            for (int i = 0; i < initialPoints.Count; ++i)
-            {
-                sut.InitialPoint = new DenseVector(initialPoints[i]);
-                var result = sut.Solve();
-
-                Assert.AreEqual(5.0, result.CurrentCost, error);
-                Assert.AreEqual(1.0, result.CurrentPoint[0], error);
-                Assert.IsTrue(
-                    Math.Abs(result.CurrentPoint[1] + 1.0) <= error ||
-                    Math.Abs(result.CurrentPoint[1] + 3.0) <= error
-                );
-            }
         }
 
+        [TestMethod]
+        public void ZeroTheta_multipleInputs_singleMinimum_oneConstraint()
+        {
+            var data = data_multipleInputs_singleMinimum_oneConstraint();
+            Execute(data, new ZeroThetaPenalty(data.Constraints, 2.0, 2.0));
+        }
+        
+        [TestMethod]
+        [Ignore]
+        public void SimpleTheta_multipleInputs_singleMinimum_oneConstraint()
+        {
+            var data = data_multipleInputs_singleMinimum_oneConstraint();
+            Execute(data, new SimpleThetaPenalty(data.Constraints, 1.0, 4.0));
+        }
 
         [TestMethod]
-        public void multipleInputs_singleMinimum_multipleConstraint()
+        public void ProperTheta_multipleInputs_singleMinimum_oneConstraint()
+        {
+            var data = data_multipleInputs_singleMinimum_oneConstraint();
+            Execute(data, new ProperThetaPenalty(data.Constraints));
+        }
+
+        static TestCase data_multipleInputs_singleMinimum_multipleConstraintt()
         {
             // f(x,y) = (x - 1) ^ 2 + (y + 2) ^ 2 + 4
-            GaussSiedlerWithPowellPenalty sut = getAlgorithm((x) => (x[0] - 1.0) * (x[0] - 1.0) + (x[1] + 2.0) * (x[1] + 2.0) + 4.0, 2,
-                withConstraints((x) => -x[1] + 0.8, // y <= 0.8
-                                (x) => -x[0] + 0.5, // x <= 0.5
-                                (x) => x[0] + x[1] - 1.0) // x + y >= 1
-            );
-
-            List<double[]> initialPoints = new List<double[]>()
+            return new TestCase
             {
-                new double[] { 1.0, 2.0 },
-                new double[] { 0.0, 0.0 },
-                new double[] { 1.0, 4.0 },
-                new double[] { -5.0, -2.0 },
-                new double[] { -100.0, 100.0 },
+                Function = (x) => (x[0] - 1.0) * (x[0] - 1.0) + (x[1] + 2.0) * (x[1] + 2.0) + 4.0,
+                Rank = 2,
+                Constraints = makeConstraints((x) => -x[1] + 0.8, // y <= 0.8
+                                              (x) => -x[0] + 0.5, // x <= 0.5
+                                              (x) => x[0] + x[1] - 1.0), // x + y >= 1
+                Points = new List<TestPoint>()
+                {
+                    new TestPoint(new double[] { 1.0, 2.0 }, new double[] { 0.5, 0.5 }),
+                    new TestPoint(new double[] { 0.0, 0.0 }, new double[] { 0.5, 0.5 }),
+                    new TestPoint(new double[] { 1.0, 4.0 }, new double[] { 0.5, 0.5 }),
+                    new TestPoint(new double[] { -5.0, -2.0 }, new double[] { 0.5, 0.5 }),
+                    new TestPoint(new double[] { -100.0, 100.0 }, new double[] { 0.5, 0.5 }),
+                }
             };
-
-            for (int i = 0; i < initialPoints.Count; ++i)
-            {
-                sut.InitialPoint = new DenseVector(initialPoints[i]);
-                var result = sut.Solve();
-
-                Assert.AreEqual(10.5, result.CurrentCost, error);
-                Assert.AreEqual(0.5, result.CurrentPoint[0], error);
-                Assert.AreEqual(0.5, result.CurrentPoint[1], error);
-            }
+        }
+        
+        [TestMethod]
+        public void ZeroTheta_multipleInputs_singleMinimum_multipleConstraint()
+        {
+            var data = data_multipleInputs_singleMinimum_multipleConstraintt();
+            Execute(data, new ZeroThetaPenalty(data.Constraints, 2.0, 2.0));
         }
 
         [TestMethod]
-        public void independentMinima()
+        [Ignore]
+        public void SimpleTheta_multipleInputs_singleMinimum_multipleConstraint()
         {
-            GaussSiedlerWithPowellPenalty sut = getAlgorithm((x) => Math.Sin(x[0]) + Math.Cos(x[1]), 2,
-                withConstraints((x) => x[0], // x >= 0
-                                (x) => -x[1]) // y <= 0
-            );
-
-            List<double[]> initialPoints = new List<double[]>()
-            {
-                new double[] { Math.PI * 1.5, -Math.PI }, // Minimum cost
-                new double[] { -Math.PI * 0.5, Math.PI }, // Minimum function, but constraints not met, x[0] has local minima in x[0] = 0
-                new double[] { Math.PI * 1.5 - 0.8, -Math.PI * 3.0 - 1.0 }, // Close to minimum cost
-            };
-
-            List<double[]> expectedPoints = new List<double[]>() // x = 2kPi + 3Pi/2, y = 2kPi + Pi
-            {
-                new double[] { Math.PI * 1.5, -Math.PI },
-                new double[] { 0.0, -Math.PI },
-                new double[] { Math.PI * 1.5, -Math.PI * 3.0 }
-            };
-
-            for (int i = 0; i < initialPoints.Count; ++i)
-            {
-                sut.InitialPoint = new DenseVector(initialPoints[i]);
-                var result = sut.Solve();
-
-                Assert.AreEqual(expectedPoints[i][0], result.CurrentPoint[0], error);
-                Assert.AreEqual(expectedPoints[i][1], result.CurrentPoint[1], error);
-            }
+            var data = data_multipleInputs_singleMinimum_multipleConstraintt();
+            Execute(data, new SimpleThetaPenalty(data.Constraints, 1.0, 4.0));
         }
 
         [TestMethod]
-        public void dependentMinima()
+        public void ProperTheta_multipleInputs_singleMinimum_multipleConstraint()
         {
-            GaussSiedlerWithPowellPenalty sut = getAlgorithm((x) => Math.Sin(x[0]) * Math.Cos(x[1]), 2,
-                withConstraints((x) => x[0], // x >= 0
-                                (x) => -x[1]) // y <= 0
-            );
+            var data = data_multipleInputs_singleMinimum_multipleConstraintt();
+            Execute(data, new ProperThetaPenalty(data.Constraints));
+        }
 
-            List<double[]> initialPoints = new List<double[]>()
+        static TestCase data_independentMinima()
+        {
+            Func<Vector, double> func = (x) => Math.Sin(x[0]) + Math.Cos(x[1]);
+            return new TestCase
             {
-                new double[] { Math.PI * 1.5, -Math.PI * 2.0 }, // Minimum cost
-                new double[] { Math.PI * 2.5 - 0.8, -Math.PI * 3.0 - 1.0 }, // Close to minimum cost
-                new double[] { -Math.PI * 1.5, Math.PI }, // Minimum function, but constraints not met, has local minima in x[0] = 0
-                new double[] { -Math.PI * 0.5, -Math.PI }, // Minimum function, but constraints not met, should go over minima in x[0] = 0
+                Function = func,
+                Rank = 2,
+                Constraints = makeConstraints((x) => x[0], // x >= 0
+                                              (x) => -x[1]), // y <= 0
+                Points = new List<TestPoint>()
+                {
+                    new TestPoint(new double[] { Math.PI * 1.5, -Math.PI }, new double[] { Math.PI * 1.5, -Math.PI }),  // Minimum cost
+                    new TestPoint(new double[] { Math.PI * 1.5 - 0.8, -Math.PI * 3.0 - 1.0 }, new double[] { Math.PI * 1.5, -Math.PI * 3.0 }), // Close to minimum cost
+                    // Minimum function, but constraints not met, x[0] has local minima in x[0] = 0
+                    // Method may fall into this minima, but it may as well skip over it if directional minimizer make long enough step
+                    new TestPoint(new double[] { -Math.PI * 0.5, Math.PI }, (x) =>
+                        {
+                            return (Math.Abs(x[0]) <= 5.0 * error && Math.Abs(x[1] + Math.PI) <= 5.0 * error) ||
+                                    Math.Abs(func(x) + 2.0) <= error;
+                        }
+                    ), 
+                }
             };
-
-            List<double[]> expectedPoints = new List<double[]>() // (x = 2kPi + 3Pi/2 && y = 2kPi) || (x = 2kPi + Pi/2 && y = 2kPi + Pi)
-            {
-                new double[] { Math.PI * 1.5, -Math.PI * 2.0 },
-                new double[] { Math.PI * 2.5, -Math.PI * 3.0 },
-                new double[] { Math.PI * 0.0, -Math.PI * 0.0 },
-                new double[] { Math.PI * 0.5, -Math.PI * 1.0 },
-            };
-
-            for (int i = 0; i < initialPoints.Count; ++i)
-            {
-                sut.InitialPoint = new DenseVector(initialPoints[i]);
-                var result = sut.Solve();
-
-                Assert.AreEqual(expectedPoints[i][0], result.CurrentPoint[0], error);
-                Assert.AreEqual(expectedPoints[i][1], result.CurrentPoint[1], error);
-            }
         }
 
         [TestMethod]
-        public void noMinimaUnlessConstrined()
+        public void ZeroTheta_independentMinima()
         {
-            GaussSiedlerWithPowellPenalty sut = getAlgorithm((x) => x[0] * x[0] * x[0], 1,
-                withConstraints((x) => x[0] - 2.0) // x >= 2
-            );
+            var data = data_independentMinima();
+            Execute(data, new ZeroThetaPenalty(data.Constraints, 2.0, 2.0));
+        }
 
-            List<double[]> initialPoints = new List<double[]>()
+        [TestMethod]
+        [Ignore]
+        public void SimpleTheta_independentMinima()
+        {
+            var data = data_independentMinima();
+            Execute(data, new SimpleThetaPenalty(data.Constraints, 1.0, 4.0));
+        }
+
+        [TestMethod]
+        public void ProperTheta_independentMinima()
+        {
+            var data = data_independentMinima();
+            Execute(data, new ProperThetaPenalty(data.Constraints));
+        }
+
+        static TestCase data_dependentMinima()
+        {
+            Func<Vector, double> func = (x) => Math.Sin(x[0]) * Math.Cos(x[1]);
+            return new TestCase
             {
-                new double[] { 0.0 },
-                new double[] { 2.0 },
-                new double[] { 100.0 },
-                //new double[] { -100.0 } // TODO: this doesn't work -> f(x) >> c(x) and it goes to -inf. We need general fallback when such thing happens
+                Function = func,
+                Rank = 2,
+                Constraints = makeConstraints((x) => x[0], // x >= 0
+                                              (x) => -x[1]), // y <= 0
+                Points = new List<TestPoint>()
+                {
+                    new TestPoint(new double[] { Math.PI * 1.5, -Math.PI * 2.0 }, new double[] { Math.PI * 1.5, -Math.PI * 2.0 }),  // Minimum cost
+                    new TestPoint(new double[] { Math.PI * 2.5 - 0.8, -Math.PI * 3.0 - 1.0 }, new double[] { Math.PI * 2.5, -Math.PI * 3.0 }), // Close to minimum cost
+                    // Minimum function, but constraints not met, has local minima in x[0] = 0
+                    // Method may fall into this minima, but it may as well skip over it if directional minimizer make long enough step
+                    new TestPoint(new double[] { -Math.PI * 1.5, Math.PI }, (x) =>
+                        {
+                            return (Math.Abs(x[0]) <= 5.0 * error && Math.Abs(x[1]) <= 5.0 * error) ||
+                                    Math.Abs(func(x) + 1.0) <= error;
+                        }
+                    ),
+                    new TestPoint(new double[] { -Math.PI * 0.5, -Math.PI }, new double[] { Math.PI * 0.5, -Math.PI * 1.0 }), // Minimum function, but constraints not met, should go over minima in x[0] = 0
+                }
             };
+        }
 
-            foreach (var x0 in initialPoints)
+        [TestMethod]
+        public void ZeroTheta_dependentMinima()
+        {
+            var data = data_dependentMinima();
+            Execute(data, new ZeroThetaPenalty(data.Constraints, 2.0, 2.0));
+        }
+
+        [TestMethod]
+        [Ignore] // 4th point doesn;t work
+        public void SimpleTheta_dependentMinima()
+        {
+            var data = data_dependentMinima();
+            Execute(data, new SimpleThetaPenalty(data.Constraints, 1.0, 4.0));
+        }
+
+        [TestMethod]
+        public void ProperTheta_dependentMinima()
+        {
+            var data = data_dependentMinima();
+            Execute(data, new ProperThetaPenalty(data.Constraints));
+        }
+
+        static TestCase data_noMinimaUnlessConstrined()
+        {
+            return new TestCase
             {
-                sut.InitialPoint = new DenseVector(x0);
-                var result = sut.Solve();
+                Function = (x) => x[0] * x[0] * x[0],
+                Rank = 1,
+                Constraints = makeConstraints((x) => x[0] - 2.0), // x >= 2
+                Points = new List<TestPoint>()
+                {
+                    new TestPoint(new double[] { 0.0 }, new double[] { 2.0 }),
+                    new TestPoint(new double[] { 2.0 }, new double[] { 2.0 }),
+                    new TestPoint(new double[] { 100.0 }, new double[] { 2.0 }),
+                    //new TestPoint(new double[] { -100.0 }, new double[] { 2.0 }), // TODO: this doesn't work -> f(x) >> c(x) and it goes to -inf. We need general fallback when such thing happens
+                }
+            };
+        }
 
-                Assert.AreEqual(8.0, result.CurrentCost, error);
-                Assert.AreEqual(2.0, result.CurrentPoint[0], error);
-            }
+        [TestMethod]
+        public void ZeroTheta_noMinimaUnlessConstrined()
+        {
+            var data = data_noMinimaUnlessConstrined();
+            Execute(data, new ZeroThetaPenalty(data.Constraints, 2.0, 2.0));
+        }
+
+        [TestMethod]
+        [Ignore]
+        public void SimpleTheta_noMinimaUnlessConstrined()
+        {
+            var data = data_noMinimaUnlessConstrined();
+            Execute(data, new SimpleThetaPenalty(data.Constraints, 1.0, 4.0));
+        }
+
+        [TestMethod]
+        public void ProperTheta_noMinimaUnlessConstrined()
+        {
+            var data = data_noMinimaUnlessConstrined();
+            Execute(data, new ProperThetaPenalty(data.Constraints));
         }
     }
 }
