@@ -63,7 +63,7 @@ namespace Qfe.Parser
             AllSections sections = SectionsParser.ParseSections(input);
             return new Task
             (
-                (int)sections.RankSection.Rank,
+                (int)sections.DimensionSection.Dim,
                 compileCostFunction(sections),
                 compileConstraints(sections),
                 input
@@ -92,7 +92,7 @@ namespace Qfe.Parser
         internal CostFunction compileCostFunction(AllSections sections)
         {
             var func = compileFunction(prepareFunctionCode(sections, sections.CostFunctionSection.Function));
-            testFunction(func.Item1, sections.RankSection.Rank);
+            testFunction(func.Item1, sections.DimensionSection.Dim);
             return new CostFunction(func.Item1, func.Item2);
         }
 
@@ -103,7 +103,7 @@ namespace Qfe.Parser
                 return sections.ConstraintsSection.Constraints.Select((s) =>
                 {
                     var func = compileFunction(prepareFunctionCode(sections, s.LhsOnlyVersion));
-                    testFunction(func.Item1, sections.RankSection.Rank);
+                    testFunction(func.Item1, sections.DimensionSection.Dim);
                     return new Constraint(func.Item1, s.Type, func.Item2);
                 }).ToList();
             }

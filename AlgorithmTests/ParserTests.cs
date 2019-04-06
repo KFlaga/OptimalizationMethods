@@ -25,7 +25,7 @@ namespace AlgorithmTests
             parser = new TaskParser();
             testSections = new AllSections()
             {
-                RankSection = new RankSection() { Rank = 2 },
+                DimensionSection = new DimensionSection() { Dim = 2 },
                 ParametersSection = new ParametersSection() { Content = "" },
                 CostFunctionSection = new CostFunctionSection(),
                 ConstraintsSection = new ConstraintsSection()
@@ -99,7 +99,7 @@ namespace AlgorithmTests
         [TestMethod]
         public void CompileCostFunction_tooFewInputs()
         {
-            testSections.RankSection.Rank = 2;
+            testSections.DimensionSection.Dim = 2;
             testSections.CostFunctionSection.Function = "x[0] + x[1] + x[2]";
 
             TestUtils.ExpectThrow(() => parser.compileCostFunction(testSections));
@@ -158,7 +158,7 @@ namespace AlgorithmTests
         public void ParseTask()
         {
             string input = @"
-                $variables: 3;
+                $dim: 3;
                 $parameters:
                     double[] a = new double[] { 2.0, 1.0 };
                 $function:
@@ -171,9 +171,47 @@ namespace AlgorithmTests
 
             Task task = parser.Parse(input);
 
-            Assert.AreEqual(3, task.Rank);
+            Assert.AreEqual(3, task.Dim);
             Assert.AreEqual(4.0 + 2.0 * 3.0 + 1.0 * 4.0, task.Cost.Function(makePoint( 2.0, 3.0, 4.0 )));
             Assert.AreEqual(3, task.Constraints.Count);
+        }
+
+        [TestMethod]
+        public void ChangeVaraiblesIndexing()
+        {
+            string input = "x0 + 2 * x11 + a2 + xx1 - x-1 + x[1]";
+            string result = InputPreprocesor.ReplaceNumberedVaraiblesWithIndexedOnes(input);
+            Assert.AreEqual("x[0] + 2 * x[11] + a2 + xx[1] - x-1 + x[1]", result);
+        }
+
+        [TestMethod]
+        public void FindDimension()
+        {
+            string input = "x[1] + x[2]; 4 + x3;";
+            uint result = InputPreprocesor.FindDimension(input);
+            Assert.AreEqual(3u, result);
+
+            input = InputPreprocesor.ReplaceNumberedVaraiblesWithIndexedOnes(input);
+            result = InputPreprocesor.FindDimension(input);
+            Assert.AreEqual(4u, result);
+        }
+
+        [TestMethod]
+        public void ParseTaskWithPreprocess()
+        {
+            string input = @"
+                $function:
+                    x0 * x2 + x1 * x3;
+                $constraints:
+                    x1 >= 2;
+                    x2 >= 4;
+            ";
+
+            Task task = parser.Parse(input);
+
+            Assert.AreEqual(4, task.Dim);
+            Assert.AreEqual(4.0, task.Cost.Function(makePoint(1.0, 1.0, 2.0, 2.0)));
+            Assert.AreEqual(2, task.Constraints.Count);
         }
     }
 }

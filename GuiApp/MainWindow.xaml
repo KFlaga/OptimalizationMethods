@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="OptimalizationMethods" Height="450" Width="800">
     <DockPanel>
-        <local:TaskParserPanel x:Name="taskParserPanel" DockPanel.Dock="Left" Width="500"/>
-        <local:AlgorithmPanel x:Name="algorithmPanel" DockPanel.Dock="Right"/>
+        <local:AlgorithmPanel x:Name="algorithmPanel" DockPanel.Dock="Right" Width="300"/>
+        <local:TaskParserPanel x:Name="taskParserPanel" DockPanel.Dock="Left"/>
     </DockPanel>
 </Window>

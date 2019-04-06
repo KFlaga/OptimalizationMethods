@@ -25,7 +25,7 @@ namespace Benchmarks
             // prepare some functions
             AllSections sections = new AllSections()
             {
-                RankSection = new RankSection(),
+                DimensionSection = new DimensionSection(),
                 ParametersSection = new ParametersSection() { Content = "" },
                 CostFunctionSection = new CostFunctionSection(),
                 ConstraintsSection = new ConstraintsSection()
@@ -33,19 +33,19 @@ namespace Benchmarks
 
             TaskParser parser = new TaskParser();
 
-            sections.RankSection.Rank = 1;
+            sections.DimensionSection.Dim = 1;
             sections.CostFunctionSection.Function = "pow2(x[0]) + 10";
             funcRank1Simple = parser.compileCostFunction(sections).Function;
 
-            sections.RankSection.Rank = 4;
+            sections.DimensionSection.Dim = 4;
             sections.CostFunctionSection.Function = "x[0] + x[1] + x[2] + x[3]";
             funcRank4Simple = parser.compileCostFunction(sections).Function;
 
-            sections.RankSection.Rank = 1;
+            sections.DimensionSection.Dim = 1;
             sections.CostFunctionSection.Function = "sin(x[0]) * exp(x[0]) + ln(x[0]) * x[0]";
             funcRank1Complex = parser.compileCostFunction(sections).Function;
 
-            sections.RankSection.Rank = 4;
+            sections.DimensionSection.Dim = 4;
             sections.CostFunctionSection.Function = "sin(x[0]) * exp(x[1]) + ln(x[2]) * x[3]";
             funcRank4Complex = parser.compileCostFunction(sections).Function;
 

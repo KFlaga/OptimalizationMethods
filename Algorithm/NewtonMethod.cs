@@ -7,6 +7,8 @@ namespace Qfe
     {
         public double MinPointChange { get; set; }
 
+        const double df2_error = 1e-12;
+        
         public override FunctionPoint FindMinimum(Vector startPoint)
         {
             // Find potential minimum with linear interpolation of derivative (so quadric interpolation of function)
@@ -39,10 +41,14 @@ namespace Qfe
                     else
                     {
                         // let's move a bit in arbitrary direction
-                        df = 1.0;
+                        df = Math.Abs(df2) < df2_error ? df2 : 1.0;
                     }
                 }
-                // TODO: handle case df2 ~ 0.0
+                if(Math.Abs(df2) < df2_error)
+                {
+                    // I've no better idea for now
+                    df2 = 1.0;
+                }
                 if(df > 0.0) // Move in direction which minimizes f(x)
                 {
                     point[Direction] -= Math.Abs(df / df2);
@@ -51,6 +57,9 @@ namespace Qfe
                 {
                     point[Direction] += Math.Abs(df / df2);
                 }
+
+                double newValue = Function(point);
+                throwOnInvalidValue(newValue, point, lastPosition, Direction);
             }
             while (iteration < MaxIterations &&
                    (Math.Abs(lastValue - Function(point)) > MaxError ||
@@ -61,6 +70,14 @@ namespace Qfe
                 Point = point,
                 Value = Function(point)
             };
+        }
+
+        private void throwOnInvalidValue(double currentValue, Vector currentPos, double lastPos, int direction)
+        {
+            if(double.IsNaN(currentValue) || double.IsInfinity(currentValue))
+            {
+                throw new ArgumentOutOfRangeException(string.Format("Niepowodzenie podczas minimalizacji kierunkowej, w kierunku {0}, w punkcie: {1}. Wartość poprzedia w kierunku: {2}.", direction, currentPos, lastPos));
+            }
         }
     }
 }

@@ -16,7 +16,7 @@ namespace AlgorithmTests
             var sections = SectionsParser.Split(input);
 
             Assert.AreEqual(1, sections.Count);
-            Assert.IsInstanceOfType(sections[0], typeof(RankSection));
+            Assert.IsInstanceOfType(sections[0], typeof(DimensionSection));
             Assert.AreEqual("3;", sections[0].Content.Trim());
         }
 
@@ -66,7 +66,7 @@ namespace AlgorithmTests
             var sections = SectionsParser.Split(input);
 
             Assert.AreEqual(3, sections.Count);
-            Assert.IsInstanceOfType(sections[0], typeof(RankSection));
+            Assert.IsInstanceOfType(sections[0], typeof(DimensionSection));
             Assert.IsInstanceOfType(sections[1], typeof(ParametersSection));
             Assert.IsInstanceOfType(sections[2], typeof(CostFunctionSection));
         }
@@ -100,15 +100,15 @@ namespace AlgorithmTests
         [TestMethod]
         public void ParseRankSection()
         {
-            RankSection section = new RankSection();
+            DimensionSection section = new DimensionSection();
 
             section.Content = "1;";
             section.Parse();
-            Assert.AreEqual(1u, section.Rank);
+            Assert.AreEqual(1u, section.Dim);
 
             section.Content = " 2 ; ";
             section.Parse();
-            Assert.AreEqual(2u, section.Rank);
+            Assert.AreEqual(2u, section.Dim);
 
             section.Content = "0  ; ";
             TestUtils.ExpectThrow(() => section.Parse());

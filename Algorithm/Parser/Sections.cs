@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Qfe.Parser
 {
@@ -12,6 +13,39 @@ namespace Qfe.Parser
         Constraints
     }
 
+    internal static class InputPreprocesor
+    {
+        public static string ReplaceNumberedVaraiblesWithIndexedOnes(string input) // x1 -> x[1]
+        {
+            Regex r = new Regex(@"x\d+");
+            
+            var matches = r.Matches(input);
+            foreach(Match m in matches)
+            {
+                uint number = uint.Parse(m.Value.Substring(1));
+                input = input.Replace(m.Value, "x[" + number.ToString() + "]");
+            }
+
+            return input;
+        }
+
+        public static uint FindDimension(string input)
+        {
+            Regex r = new Regex(@"x\[\d+\]");
+
+            uint dim = 0;
+
+            var matches = r.Matches(input);
+            foreach (Match m in matches)
+            {
+                uint number = uint.Parse(m.Value.Substring(2, m.Length-3));
+                dim = Math.Max(dim, number + 1);
+            }
+
+            return dim;
+        }
+    }
+
     internal abstract class Section
     {
         public string Content { get; set; }
@@ -19,22 +53,22 @@ namespace Qfe.Parser
         public abstract void Parse();
     }
 
-    internal class RankSection : Section // TODO: rename to dimension
+    internal class DimensionSection : Section
     {
-        public uint Rank;
+        public uint Dim;
 
         public override void Parse()
         {
             // Must constain single unsigned integer and semicolon
             if(!Content.Contains(';'))
             {
-                throw new ArgumentException("Sekcja '$variables' musi kończyć się średnikiem");
+                throw new ArgumentException("Sekcja '$dim' musi kończyć się średnikiem");
             }
             Input input = new Input(Content);
             string possiblyInt = input.ReadWhile((c) => c != ';');
-            if(!uint.TryParse(possiblyInt, out Rank) || Rank == 0)
+            if(!uint.TryParse(possiblyInt, out Dim) || Dim == 0)
             {
-                throw new ArgumentException("Sekcja '$variables' musi zaiwerać wyłącznie jedną dodatnią liczbę");
+                throw new ArgumentException("Sekcja '$dim' musi zaiwerać wyłącznie jedną dodatnią liczbę");
             }
         }
     }
@@ -131,7 +165,7 @@ namespace Qfe.Parser
 
     internal class AllSections
     {
-        public RankSection RankSection { get; set; }
+        public DimensionSection DimensionSection { get; set; }
         public ParametersSection ParametersSection { get; set; }
         public CostFunctionSection CostFunctionSection { get; set; }
         public ConstraintsSection ConstraintsSection { get; set; }
@@ -142,7 +176,7 @@ namespace Qfe.Parser
         public const char sectionStart = '$';
         public readonly static Dictionary<string, Func<string, Section>> sectionTypes = new Dictionary<string, Func<string, Section>>()
         {
-            { "$variables:", (c) => new RankSection() { Content = c } },
+            { "$dim:", (c) => new DimensionSection() { Content = c } },
             { "$parameters:", (c) => new ParametersSection() { Content = c } },
             { "$function:", (c) => new CostFunctionSection() { Content = c } },
             { "$constraints:", (c) => new ConstraintsSection() { Content = c } }
@@ -150,7 +184,8 @@ namespace Qfe.Parser
 
         public static AllSections ParseSections(string c)
         {
-            List<Section> sections = Split(c);
+            string input = InputPreprocesor.ReplaceNumberedVaraiblesWithIndexedOnes(c);
+            List<Section> sections = Split(input);
             EnforceSectionsAreUnique(sections);
             foreach(var s in sections)
             {
@@ -161,17 +196,27 @@ namespace Qfe.Parser
             {
                 AllSections result = new AllSections()
                 {
-                    RankSection = sections.Single((s) => s.GetType() == typeof(RankSection)) as RankSection,
+                    DimensionSection = sections.SingleOrDefault((s) => s.GetType() == typeof(DimensionSection)) as DimensionSection,
                     ParametersSection = sections.SingleOrDefault((s) => s.GetType() == typeof(ParametersSection)) as ParametersSection,
                     CostFunctionSection = sections.Single((s) => s.GetType() == typeof(CostFunctionSection)) as CostFunctionSection,
                     ConstraintsSection = sections.SingleOrDefault((s) => s.GetType() == typeof(ConstraintsSection)) as ConstraintsSection
                 };
 
+                if(result.DimensionSection == null)
+                {
+                    uint dim = InputPreprocesor.FindDimension(input);
+                    result.DimensionSection = new DimensionSection()
+                    {
+                        Dim = dim,
+                        Content = dim.ToString() + ";"
+                    };
+                }
+
                 return result;
             }
             catch(InvalidOperationException)
             {
-                throw new ArgumentException("Nie znaleziono wymaganych sekcji: '$variables', '$fuction'");
+                throw new ArgumentException("Nie znaleziono wymaganej sekcji: '$fuction'");
             }
         }
 

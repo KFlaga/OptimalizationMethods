@@ -56,14 +56,14 @@ namespace Qfe
 
     public class Task
     {
-        public readonly int Rank;
+        public readonly int Dim;
         public readonly CostFunction Cost;
         public readonly List<Constraint> Constraints;
         public readonly string Input;
 
         public Task(int rank, CostFunction costFunction, List<Constraint> constraints, string input)
         {
-            Rank = rank;
+            Dim = rank;
             Cost = costFunction;
             Constraints = constraints;
             Input = input;

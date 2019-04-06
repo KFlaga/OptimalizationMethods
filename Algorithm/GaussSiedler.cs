@@ -18,7 +18,7 @@ namespace Qfe
 
             double lastValue = iterations.Last().CurrentFunction;
             Vector lastPoint = iterations.Last().CurrentPoint;
-            for(int direction = 0; direction < Task.Rank; ++direction)
+            for(int direction = 0; direction < Task.Dim; ++direction)
             {
                 directionalMinimizer.Direction = direction;
                 var result = directionalMinimizer.FindMinimum(point);
@@ -42,7 +42,7 @@ namespace Qfe
         protected override void Init()
         {
             double fvalue = Task.Cost.Function(InitialPoint);
-            iterations = new List<IterationResults>(MaxIterations * Task.Rank + 1)
+            iterations = new List<IterationResults>(MaxIterations * Task.Dim + 1)
             {
                 new IterationResults()
                 {

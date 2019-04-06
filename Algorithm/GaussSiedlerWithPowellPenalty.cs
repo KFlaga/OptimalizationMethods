@@ -43,11 +43,11 @@ namespace Qfe
             gaussSiedler.MaxIterations = MaxIterations;
             gaussSiedler.MinFunctionChange = MinFunctionChange;
             gaussSiedler.MinPositionChange = MinPositionChange;
-            gaussSiedler.Task = new Task(Task.Rank, new CostFunction(cost, null), null, "");
+            gaussSiedler.Task = new Task(Task.Dim, new CostFunction(cost, null), null, "");
 
             double fvalue = Task.Cost.Function(InitialPoint);
             double fcost = fvalue + penalty(InitialPoint);
-            iterations = new List<IterationResults>(MaxIterations * Task.Rank * 4 + 1)
+            iterations = new List<IterationResults>(MaxIterations * Task.Dim * 4 + 1)
             {
                 new IterationResults()
                 {

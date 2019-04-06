@@ -18,17 +18,17 @@
             <TabItem Header="Uproszczony">
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                     <StackPanel Orientation="Vertical">
-                        <StackPanel Orientation="Horizontal">
+                        <!--<StackPanel Orientation="Horizontal">
                             <Label>Liczba zmiennych:</Label>
                             <xwpf:IntegerUpDown x:Name="variableCountBox" Width="45" Value="1" Minimum="1" Maximum="10"/>
-                        </StackPanel>
+                        </StackPanel>-->
                         
                         <Label HorizontalAlignment="Left">Parametry:</Label>
                         <StackPanel x:Name="parametersPanel" Orientation="Vertical"/>
                         <Button Click="AddParameter_Click" Width="20" Height="20" Margin="2" HorizontalAlignment="Left">+</Button>
 
                         <Label>Funkcja celu:</Label>
-                        <TextBox x:Name="costFunctionTextBox" Width="250" Height="25" HorizontalAlignment="Left" VerticalContentAlignment="Center"/>
+                        <TextBox x:Name="costFunctionTextBox" MinWidth="250" Height="25" HorizontalAlignment="Stretch" VerticalContentAlignment="Center"/>
 
                         <Label HorizontalAlignment="Left">Ograniczenia:</Label>
                         <StackPanel x:Name="constraintsPanel" Orientation="Vertical"/>

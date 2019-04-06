@@ -41,7 +41,7 @@ namespace Qfe
             Loaded += TaskWindow_Loaded;
             Closing += TaskWindow_Closing;
 
-            if(algorithm.Task.Rank == 2)
+            if(algorithm.Task.Dim == 2)
             {
                 mapPlotPanel.IsEnabled = true;
                 functionMapPlot.Task = algorithm.Task;

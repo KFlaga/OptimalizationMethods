@@ -16,7 +16,7 @@ namespace Qfe
                 task = value;
                 Dispatcher.BeginInvoke((Action)(() =>
                 {
-                    updateInitialPoints(task != null ? task.Rank : 0);
+                    updateInitialPoints(task != null ? task.Dim : 0);
                     startButton.IsEnabled = task != null;
                 }));
             }

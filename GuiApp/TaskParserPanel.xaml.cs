@@ -118,7 +118,7 @@ namespace Qfe
         {
             StringBuilder result = new StringBuilder();
 
-            result.AppendLine("$variables: " + variableCountBox.Value.Value.ToString() + ";");
+            //result.AppendLine("$variables: " + variableCountBox.Value.Value.ToString() + ";");
 
             if(parametersPanel.Children.Count > 0)
             {
