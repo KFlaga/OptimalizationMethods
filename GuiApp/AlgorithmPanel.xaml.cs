@@ -27,6 +27,8 @@ namespace Qfe
         public double MinPositionChange { get { return minPositionChangeBox.Value.Value; } }
         public double MinFunctionChange { get { return minFunctionChangeBox.Value.Value; } }
         public double MaxConstraintValue { get { return maxConstraintValueBox.Value.Value; } }
+        public double InitialPowellSigma { get { return initialSigmaValueBox.Value.Value; } }
+        public bool DisableModTwo { get { return secretSwith.IsChecked.GetValueOrDefault(false); } }
 
         public double[] InitialValues
         {
@@ -78,7 +80,8 @@ namespace Qfe
                     MinFunctionChange = MinFunctionChange,
                     MaxIterations = MaxIterations,
                     MaxConstraintError = MaxConstraintValue,
-                    PowellPenalty = new ProperThetaPenalty(task.Constraints)
+                    PowellPenalty = new ProperThetaPenalty(task.Constraints, InitialPowellSigma),
+                    DisableModTwo = DisableModTwo
                 })
             {
                 ShowActivated = true

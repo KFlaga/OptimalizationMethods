@@ -41,6 +41,10 @@ namespace Qfe
         public virtual bool Terminated { get; set; }
         public ReadOnlyCollection<IterationResults> Results => new ReadOnlyCollection<IterationResults>(iterations);
 
+        public int iterattions1 = 0;
+        public int iterattions2 = 0;
+        public bool DisableModTwo = false;
+
         public virtual IterationResults Solve()
         {
             Init();

@@ -9,6 +9,7 @@ namespace Qfe
     {
         public PowellPenaltyFunction PowellPenalty { get; set; }
         public double MaxConstraintError { get; set; } = 1e-3;
+        public double InitialSigma { get; set; } = 1.0;
 
         public override bool Terminated { get => base.Terminated; set { base.Terminated = value; gaussSiedler.Terminated = value; } }
 
@@ -33,7 +34,7 @@ namespace Qfe
         {
             if (PowellPenalty == null)
             {
-                PowellPenalty = new ZeroThetaPenalty(Task.Constraints, 2.0, 2.0);
+                PowellPenalty = new ProperThetaPenalty(Task.Constraints, InitialSigma);
             }
             else
             {
@@ -44,6 +45,7 @@ namespace Qfe
             gaussSiedler.MinFunctionChange = MinFunctionChange;
             gaussSiedler.MinPositionChange = MinPositionChange;
             gaussSiedler.Task = new Task(Task.Dim, new CostFunction(cost, null), null, "");
+            gaussSiedler.DisableModTwo = DisableModTwo;
 
             double fvalue = Task.Cost.Function(InitialPoint);
             double fcost = fvalue + penalty(InitialPoint);
@@ -67,7 +69,10 @@ namespace Qfe
             gaussSiedler.InitialPoint = point;
             gaussSiedler.Solve();
 
-            foreach(var result in gaussSiedler.Results.Skip(1))
+            iterattions1 = gaussSiedler.iterattions1;
+            iterattions2 = gaussSiedler.iterattions2;
+
+            foreach (var result in gaussSiedler.Results.Skip(1))
             {
                 iterations.Add(new IterationResults()
                 {
@@ -90,7 +95,7 @@ namespace Qfe
         {
             var lastIteration = iterations.Last();
             return Terminated ||
-                   lastIteration.Iteration > MaxIterations ||
+                   lastIteration.Iteration > (int)(Math.Sqrt(MaxIterations)) ||
                    (lastIteration.MaxConstraintValue < MaxConstraintError &&
                     lastIteration.LastPointChange < MinPositionChange &&
                     lastIteration.LastFunuctionChange < MinFunctionChange);

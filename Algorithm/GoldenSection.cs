@@ -6,37 +6,45 @@ namespace Qfe
 
     public class GoldenSectionElementaryDirections : DirectionalMinimalization
     {
-        public const double GoldenRatio = 0.61803398;
+        //public const double GoldenRatio = 0.61803398;
+        public const double GoldenRatio = 0.5;
 
         public double LeftInterval { get; set; }
         public double RightInterval { get; set; }
 
-        private double wholeInterval()
+        protected double leftInt;
+        protected double rightInt;
+
+        protected double wholeInterval()
         {
-            return RightInterval - LeftInterval;
+            return rightInt - leftInt;
         }
 
         public override FunctionPoint FindMinimum(Vector startPoint)
         {
             Vector left = (Vector)startPoint.Clone();
             Vector right = (Vector)startPoint.Clone();
+            leftInt = LeftInterval;
+            rightInt = RightInterval;
 
-            left[Direction] = RightInterval - GoldenRatio * wholeInterval();
-            right[Direction] = LeftInterval + GoldenRatio * wholeInterval();
+            left[Direction] = leftInt;
+            right[Direction] = rightInt;
+            // Sometimes for extermaly big numbers difference between consuequentive double values is bigger than MaxError, so it enters inifinite loop. Iterations limit guards against it.
+            int iterations = (int)(wholeInterval() / MaxError) + 1;
 
-            while (wholeInterval() > MaxError)
+            while (wholeInterval() > MaxError && iterations > 0)
             {
+                iterations--;
+                iterations1++;
                 if (Function(left) < Function(right))
                 {
-                    RightInterval = right[Direction];
-                    right[Direction] = left[Direction];
-                    left[Direction] = RightInterval - GoldenRatio * wholeInterval();
+                    rightInt = rightInt - GoldenRatio * wholeInterval();
+                    right[Direction] = rightInt;
                 }
                 else
                 {
-                    LeftInterval = left[Direction];
-                    left[Direction] = right[Direction];
-                    right[Direction] = LeftInterval + GoldenRatio * wholeInterval();
+                    leftInt = leftInt + GoldenRatio * wholeInterval();
+                    left[Direction] = leftInt;
                 }
             }
 
@@ -45,7 +53,7 @@ namespace Qfe
                 Point = (Vector)startPoint.Clone()
             };
 
-            result.Point[Direction] = (LeftInterval + RightInterval) * 0.5;
+            result.Point[Direction] = (leftInt + rightInt) * 0.5;
             result.Value = Function(result.Point);
             return result;
         }
@@ -96,13 +104,13 @@ namespace Qfe
 
                 if (dx > 0.0)
                 {
-                    base.LeftInterval = point[Direction];
-                    base.RightInterval = point[Direction] + dx;
+                    base.leftInt = point[Direction];
+                    base.rightInt = point[Direction] + dx;
                 }
                 else
                 {
-                    base.LeftInterval = point[Direction] + dx;
-                    base.RightInterval = point[Direction];
+                    base.leftInt = point[Direction] + dx;
+                    base.rightInt = point[Direction];
                 }
                 result = base.FindMinimum(point);
                 point = result.Point;

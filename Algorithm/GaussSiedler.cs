@@ -13,17 +13,27 @@ namespace Qfe
             {
                 Function = Task.Cost.Function,
                 MaxError = MinFunctionChange,
-                MinPointChange = MinPositionChange
+                MinPointChange = MinPositionChange,
+                DisableModTwo = DisableModTwo
             };
 
             double lastValue = iterations.Last().CurrentFunction;
             Vector lastPoint = iterations.Last().CurrentPoint;
-            for(int direction = 0; direction < Task.Dim; ++direction)
+
+
+            for (int direction = 0; direction < Task.Dim; ++direction)
             {
                 directionalMinimizer.Direction = direction;
                 var result = directionalMinimizer.FindMinimum(point);
 
+                iterattions1 += directionalMinimizer.iterations1;
+                iterattions2 += directionalMinimizer.iterations2;
+
                 point = result.Point;
+                if (Math.Abs(point[0] - 1.970) < 0.01 && Math.Abs(point[1] - 3.574) < 0.01)
+                {
+                    int x = 0;
+                }
 
                 iterations.Add(new IterationResults()
                 {

@@ -6,9 +6,12 @@ namespace Qfe
     public class NewtonMethod : DirectionalMinimalization
     {
         public double MinPointChange { get; set; }
+        public bool DisableModTwo;
 
         const double df2_error = 1e-12;
-        
+
+        GoldenSectionElementaryDirections goldenSection = new GoldenSectionElementaryDirections();
+
         public override FunctionPoint FindMinimum(Vector startPoint)
         {
             // Find potential minimum with linear interpolation of derivative (so quadric interpolation of function)
@@ -23,14 +26,20 @@ namespace Qfe
                 lastPosition = point[Direction];
                 lastValue = Function(point);
                 iteration++;
+                iterations1++;
 
-                double df = NumericalDerivative.First(Function, point, Direction);
-                double df2 = NumericalDerivative.Second(Function, point, Direction);
+                double df = NumericalDerivative.First(Function, point, Direction, MaxError/100);
+                double df2 = NumericalDerivative.Second(Function, point, Direction, MaxError / 100);
+                double step = Math.Abs(df / df2);
 
-                if (Math.Abs(df) < MaxError)
+                if (Math.Abs(df) < MaxError || step < MinPointChange)
                 {
                     // We are at point f'(x) ~= 0
-                    if (df2 > 0.0) // Ad we have minumum, so we're good
+                    double fhl = NumericalDerivative.fhLeft(Function, point, Direction, MaxError);
+                    double fhr = NumericalDerivative.fhRight(Function, point, Direction, MaxError);
+
+                    // We cound check if f''(x) > 0, but due to non-continous derivative of penalty function sometimes it may fail
+                    if (fhl > lastValue && fhr > lastValue)
                     {
                         return new FunctionPoint()
                         {
@@ -38,38 +47,90 @@ namespace Qfe
                             Value = lastValue
                         };
                     }
-                    else
+                    else if(!DisableModTwo)
                     {
-                        // let's move a bit in arbitrary direction
-                        df = Math.Abs(df2) < df2_error ? df2 : 1.0;
+                        // Most probably we are close to maximum and function is quite flat. To give it a kick lets use golden section.
+                        point = useGoldenSection(point, lastValue, step, fhl, fhr);
                     }
-                }
-                if(Math.Abs(df2) < df2_error)
-                {
-                    // I've no better idea for now
-                    df2 = 1.0;
-                }
-                if(df > 0.0) // Move in direction which minimizes f(x)
-                {
-                    point[Direction] -= Math.Abs(df / df2);
                 }
                 else
                 {
-                    point[Direction] += Math.Abs(df / df2);
-                }
+                    if (Math.Abs(df2) < df2_error)
+                    {
+                        df2 = 1.0;
+                    }
+                    if (df > 0.0) // Move in direction which minimizes f(x)
+                    {
+                        point[Direction] -= Math.Abs(df / df2);
+                    }
+                    else
+                    {
+                        point[Direction] += Math.Abs(df / df2);
+                    }
 
-                double newValue = Function(point);
-                throwOnInvalidValue(newValue, point, lastPosition, Direction);
+                    double newValue = Function(point);
+                    throwOnInvalidValue(newValue, point, lastPosition, Direction);
+                }
             }
             while (iteration < MaxIterations &&
                    (Math.Abs(lastValue - Function(point)) > MaxError ||
                     Math.Abs(lastPosition - point[Direction]) > MinPointChange));
+
+            if(iteration == MaxIterations)
+            {
+                // It doesnt converge
+            }
 
             return new FunctionPoint()
             {
                 Point = point,
                 Value = Function(point)
             };
+        }
+
+        private Vector useGoldenSection(Vector point, double lastValue, double step, double fhl, double fhr)
+        {
+            goldenSection.Direction = Direction;
+            goldenSection.Function = Function;
+            goldenSection.MaxError = MaxError;
+            goldenSection.MaxIterations = MaxIterations;
+            if (step == 0 || double.IsNaN(step))
+            {
+                step = MinPointChange;
+            }
+
+            FunctionPoint lookLeft()
+            {
+                goldenSection.LeftInterval = point[Direction] - step * 1000;
+                goldenSection.RightInterval = point[Direction];
+                return goldenSection.FindMinimum(point);
+            };
+
+            FunctionPoint lookRight()
+            {
+                goldenSection.LeftInterval = point[Direction];
+                goldenSection.RightInterval = point[Direction] + step * 1000;
+                return goldenSection.FindMinimum(point);
+            };
+
+            if (fhl < fhr && fhr > lastValue)
+            {
+                var p = lookLeft();
+                point = p.Point;
+            }
+            else if (fhr < fhl && fhl > lastValue)
+            {
+                var p = lookRight();
+                point = p.Point;
+            }
+            else
+            {
+                var pl = lookLeft();
+                var pr = lookRight();
+                point = pl.Value < pr.Value ? pl.Point : pr.Point;
+            }
+            iterations2 = goldenSection.iterations1;
+            return point;
         }
 
         private void throwOnInvalidValue(double currentValue, Vector currentPos, double lastPos, int direction)

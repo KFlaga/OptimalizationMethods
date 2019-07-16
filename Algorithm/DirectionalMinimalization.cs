@@ -16,6 +16,10 @@ namespace Qfe
         public double MaxError { get; set; } = 1e-3;
         public int MaxIterations { get; set; } = 20;
 
-        public abstract FunctionPoint FindMinimum(Vector startPoint); 
+        public abstract FunctionPoint FindMinimum(Vector startPoint);
+
+
+        public int iterations1 = 0;
+        public int iterations2 = 0;
     }
 }

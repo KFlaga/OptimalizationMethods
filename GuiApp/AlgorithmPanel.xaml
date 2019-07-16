@@ -48,6 +48,14 @@
                     <Label Width="120">Max ||c(x)||</Label>
                     <xwpf:DoubleUpDown x:Name="maxConstraintValueBox" ShowButtonSpinner="False" Width="60" Value="1E-3"/>
                 </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Label Width="120">Sigma(0)</Label>
+                    <xwpf:DoubleUpDown x:Name="initialSigmaValueBox" ShowButtonSpinner="False" Width="60" Value="1"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Label Width="120">Wyłącz Mod2</Label>
+                    <CheckBox x:Name="secretSwith" VerticalAlignment="Center"/>
+                </StackPanel>
             </StackPanel>
         </ScrollViewer>
         <Button x:Name="startButton" Click="StartAlgorithm_Click" Width="100" VerticalAlignment="Bottom" IsEnabled="False" Margin="0,10,0,10">Start</Button>

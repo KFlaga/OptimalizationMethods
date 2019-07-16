@@ -124,7 +124,11 @@ namespace Qfe
             s.AppendLine();
             s.AppendFormat("||xk+1 - xk|| = {0}", result.LastPointChange);
             s.AppendLine();
-            
+            //s.AppendFormat("IT1 = {0}", Algorithm.iterattions1);
+            //s.AppendLine();
+            //s.AppendFormat("IT2 = {0}", Algorithm.iterattions2);
+            //s.AppendLine();
+
             return s.ToString();
         }
 

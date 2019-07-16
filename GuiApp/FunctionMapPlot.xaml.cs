@@ -67,6 +67,7 @@ namespace Qfe
 
         private int dataResolution = 100;
         private double[,] functionValues;
+        private double[,] costValues;
         private double x_min, x_max, y_min, y_max;
 
         private HeatMapSeries heatMap = new HeatMapSeries()
